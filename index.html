@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Impara · Learn Italian</title>
+<style>
+  :root{
+    --green:#58cc02; --green-dark:#58a700; --green-shadow:#4caf00;
+    --blue:#1cb0f6; --blue-dark:#1899d6;
+    --red:#ff4b4b; --red-dark:#ea2b2b;
+    --gold:#ffc800; --purple:#ce82ff; --purple-dark:#a568cc;
+    --bg:#fff; --bg2:#f7f7f7; --ink:#3c3c3c; --muted:#afafaf;
+    --border:#e5e5e5; --card:#fff;
+  }
+  [data-theme="dark"]{
+    --bg:#131f24; --bg2:#1b2c34; --ink:#f1f1f1; --muted:#7b8b93;
+    --border:#37464f; --card:#1b2c34;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  select{font-family:inherit}
+  .hidden{display:none !important}
+
+  header{width:100%;max-width:640px;display:flex;align-items:center;gap:18px;padding:16px 20px;position:sticky;top:0;background:var(--bg);z-index:10}
+  .stat{display:flex;align-items:center;gap:6px;font-weight:800;font-size:18px}
+  .stat .ico{font-size:22px}
+  .stat.flame{color:#ff9600} .stat.gem{color:var(--blue)} .stat.heart{color:var(--red)}
+  .spacer{flex:1}
+  .theme-btn{font-size:22px;opacity:.7}
+  main{width:100%;max-width:640px;padding:0 20px 130px;flex:1}
+
+  .unit-banner{color:#fff;border-radius:16px;padding:18px 22px;margin:14px 0 28px;display:flex;justify-content:space-between;align-items:center}
+  .unit-banner h2{font-size:14px;opacity:.9;font-weight:700}
+  .unit-banner h1{font-size:21px;margin-top:2px}
+  .unit-banner .guide{font-size:13px;background:rgba(255,255,255,.2);padding:8px 14px;border-radius:12px;font-weight:700;white-space:nowrap}
+
+  .path{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px}
+  .node-wrap{display:flex;flex-direction:column;align-items:center;position:relative}
+  .node{width:74px;height:66px;border-radius:50%;font-size:30px;display:flex;align-items:center;justify-content:center;transition:transform .08s;position:relative;color:#fff}
+  .node:active{transform:translateY(3px)}
+  .node.done{background:var(--gold);box-shadow:0 6px 0 #e0a800}
+  .node.current{background:var(--green);box-shadow:0 6px 0 var(--green-shadow)}
+  .node.locked{background:#c9c9c9;box-shadow:0 6px 0 #b0b0b0;cursor:not-allowed}
+  .node.conj{background:var(--purple);box-shadow:0 6px 0 var(--purple-dark)}
+  .node.current::after{content:"START";position:absolute;top:-34px;background:var(--card);color:var(--green);font-size:11px;font-weight:800;padding:5px 10px;border-radius:10px;border:2px solid var(--border);white-space:nowrap}
+  .node-label{font-size:12px;color:var(--muted);font-weight:700;margin:4px 0 10px;max-width:150px;text-align:center}
+
+  #lesson{width:100%;max-width:640px;padding:14px 20px;display:flex;flex-direction:column;min-height:100vh}
+  .progress-row{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .close{font-size:26px;color:var(--muted);font-weight:700;line-height:1}
+  .bar{flex:1;height:16px;background:var(--border);border-radius:10px;overflow:hidden}
+  .bar > div{height:100%;background:var(--green);border-radius:10px;transition:width .3s;width:0}
+  .mini-heart{color:var(--red);font-weight:800;font-size:18px;display:flex;align-items:center;gap:4px}
+
+  .q-type{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+  .q-title{font-size:23px;font-weight:800;margin-bottom:24px}
+
+  .speaker{display:inline-flex;align-items:center;gap:12px;background:var(--blue);color:#fff;padding:16px 22px;border-radius:16px;font-size:30px;box-shadow:0 4px 0 var(--blue-dark);margin-bottom:8px}
+  .phrase{font-size:22px;font-weight:700;margin:14px 0 26px;line-height:1.4}
+  .ctx{font-size:15px;color:var(--muted);font-weight:600;margin:-10px 0 20px}
+
+  .choices{display:grid;gap:12px}
+  .choice{border:2px solid var(--border);border-bottom-width:4px;border-radius:14px;padding:16px 18px;font-size:18px;font-weight:600;text-align:left;background:var(--card);transition:transform .05s}
+  .choice:active{transform:translateY(2px)}
+  .choice.sel{border-color:var(--blue);background:#ddf4ff;color:var(--blue-dark)}
+  .choice.right{border-color:var(--green);background:#d7ffb8;color:var(--green-dark)}
+  .choice.wrong{border-color:var(--red);background:#ffdfe0;color:var(--red-dark)}
+  .choice .num{display:inline-block;width:26px;height:26px;border:2px solid var(--border);border-radius:8px;text-align:center;line-height:23px;font-size:13px;margin-right:12px;color:var(--muted)}
+
+  .answer-area{min-height:64px;border-bottom:2px solid var(--border);display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;margin-bottom:22px;align-content:flex-start}
+  .bank{display:flex;flex-wrap:wrap;gap:10px}
+  .tile{border:2px solid var(--border);border-bottom-width:4px;border-radius:12px;padding:10px 16px;font-size:17px;font-weight:600;background:var(--card)}
+  .tile:active{transform:translateY(2px)}
+  .tile.used{visibility:hidden}
+
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .match-grid button{border:2px solid var(--border);border-bottom-width:4px;border-radius:12px;padding:16px;font-size:17px;font-weight:600;background:var(--card)}
+  .match-grid button.sel{border-color:var(--blue);background:#ddf4ff;color:var(--blue-dark)}
+  .match-grid button.gone{opacity:.25;pointer-events:none;border-color:var(--green)}
+  .wrong-flash{border-color:var(--red)!important;background:#ffdfe0!important}
+
+  input.type{width:100%;border:2px solid var(--border);border-radius:14px;padding:14px;font-size:18px;font-family:inherit;outline:none;background:var(--card);color:var(--ink)}
+  input.type:focus{border-color:var(--blue)}
+  .conj-pronoun{font-size:34px;font-weight:800;margin:6px 0 2px;color:var(--purple)}
+  .gender-noun{font-size:34px;font-weight:800;margin:6px 0 18px}
+
+  .foot{margin-top:auto;border-top:2px solid var(--border);padding:18px 0 4px}
+  .foot.show-result{margin:0 -20px;padding:18px 20px 22px}
+  .foot.correct{background:#d7ffb8} .foot.incorrect{background:#ffdfe0}
+  .result-msg{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:800;margin-bottom:14px}
+  .result-msg.correct{color:var(--green-dark)} .result-msg.incorrect{color:var(--red-dark)}
+  .result-msg .sub{display:block;font-size:14px;font-weight:600;margin-top:2px}
+  .btn{width:100%;padding:15px;border-radius:16px;font-size:16px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff;background:var(--green);box-shadow:0 4px 0 var(--green-shadow)}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--green-shadow)}
+  .btn:disabled{background:var(--border);color:var(--muted);box-shadow:0 4px 0 #cfcfcf;cursor:not-allowed}
+  .btn.skip{background:var(--card);color:var(--muted);box-shadow:0 4px 0 var(--border);border:2px solid var(--border)}
+  .btn.red{background:var(--red);box-shadow:0 4px 0 var(--red-dark)}
+  .btn.blue{background:var(--blue);box-shadow:0 4px 0 var(--blue-dark)}
+  .btn.purple{background:var(--purple);box-shadow:0 4px 0 var(--purple-dark)}
+
+  .center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100vh;padding:30px;gap:22px}
+  .center-screen h1{font-size:30px;color:var(--gold)}
+  .center-screen p{color:var(--muted);font-weight:600;max-width:360px;line-height:1.5}
+  .big{font-size:72px}
+  .reward-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+  .reward{border:2px solid var(--gold);border-radius:14px;padding:10px 16px;min-width:120px}
+  .reward.blue{border-color:var(--blue)} .reward.purple{border-color:var(--purple)}
+  .reward .lbl{font-size:11px;font-weight:800;color:#fff;background:var(--gold);border-radius:8px;padding:3px;letter-spacing:.5px}
+  .reward.blue .lbl{background:var(--blue)} .reward.purple .lbl{background:var(--purple)}
+  .reward .val{font-size:24px;font-weight:800;margin-top:8px;color:var(--gold)}
+  .reward.blue .val{color:var(--blue)} .reward.purple .val{color:var(--purple)}
+
+  .menu-card{background:var(--card);border:2px solid var(--border);border-bottom-width:4px;border-radius:16px;padding:18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;width:100%;text-align:left}
+  .menu-card:active{transform:translateY(2px)}
+  .menu-card .mi{font-size:34px}
+  .menu-card .mt{font-size:18px;font-weight:800}
+  .menu-card .md{font-size:13px;color:var(--muted);font-weight:600;margin-top:2px}
+  .menu-card .badge{margin-left:auto;background:var(--red);color:#fff;font-weight:800;border-radius:20px;padding:4px 12px;font-size:14px}
+
+  nav{position:fixed;bottom:0;width:100%;max-width:640px;display:flex;justify-content:space-around;background:var(--card);border-top:2px solid var(--border);padding:8px 0}
+  nav button{font-size:24px;padding:8px 14px;border-radius:12px;opacity:.5;position:relative}
+  nav button.active{opacity:1;background:#ddf4ff}
+  [data-theme="dark"] nav button.active{background:var(--bg2)}
+  nav .ndot{position:absolute;top:2px;right:6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:0 5px}
+
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .tip{background:#ddf4ff;border-radius:12px;padding:14px 16px;font-size:14px;color:var(--blue-dark);margin-bottom:20px;font-weight:600}
+  [data-theme="dark"] .tip{background:var(--bg2);color:var(--blue)}
+  .settings-box{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+  .settings-box label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bottom:8px}
+  .settings-box select{width:100%;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--ink);font-size:15px}
+</style>
+</head>
+<body>
+
+<div id="home">
+  <header>
+    <div class="stat flame"><span class="ico">🔥</span><span id="streak">0</span></div>
+    <div class="stat gem"><span class="ico">💎</span><span id="gems">0</span></div>
+    <div class="spacer"></div>
+    <button class="theme-btn" id="themeBtn">🌙</button>
+    <div class="stat heart"><span class="ico">❤️</span><span id="hearts">5</span></div>
+  </header>
+  <main><div id="path"></div></main>
+</div>
+
+<div id="lesson" class="hidden"></div>
+
+<nav id="nav">
+  <button data-view="home" class="active">🏠</button>
+  <button data-view="review">🔁</button>
+  <button data-view="train">🏋️</button>
+  <button data-view="stats">📊</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   IMPARA v3 — Italian trainer (single file)
+   24 thematic units · 5-tense conjugation gym ·
+   spaced-repetition review · dictation · gender/article drill ·
+   hardest-words drill · dark mode · smart voice selection.
+   ============================================================ */
+
+/* ---------- VOCAB UNITS (high-frequency core ≈ A1→B1) ---------- */
+const CURRICULUM = [
+ { unit:"Unit 1", title:"Greetings", guide:"Buongiorno!", color:"var(--green)", lessons:[
+   { name:"Ciao!", cards:[["ciao","hi / bye"],["buongiorno","good morning"],["buonasera","good evening"],["buonanotte","good night"],["grazie","thank you"],["prego","you're welcome"],["sì","yes"],["no","no"]],
+     sentences:[["Buongiorno!","Good morning!"],["Grazie mille","Thanks a lot"]] },
+   { name:"Io sono", cards:[["io","I"],["sono","I am"],["tu","you"],["sei","you are"],["mi chiamo","my name is"],["come stai?","how are you?"],["bene","well / fine"],["e tu?","and you?"]],
+     sentences:[["Io sono Marco","I am Marco"],["Come stai?","How are you?"]] },
+ ]},
+ { unit:"Unit 2", title:"Family & People", guide:"La famiglia", color:"var(--blue)", lessons:[
+   { name:"Family", cards:[["la madre","the mother"],["il padre","the father"],["il fratello","the brother"],["la sorella","the sister"],["il figlio","the son"],["la figlia","the daughter"],["i genitori","the parents"],["il nonno","the grandfather"]],
+     sentences:[["Lei è mia sorella","She is my sister"],["Ho un fratello","I have a brother"]] },
+   { name:"Describing", cards:[["alto","tall"],["basso","short"],["bello","beautiful"],["piccolo","small"],["grande","big"],["giovane","young"],["vecchio","old"],["simpatico","nice / likeable"]],
+     sentences:[["Mio padre è alto","My father is tall"],["La casa è grande","The house is big"]] },
+ ]},
+ { unit:"Unit 3", title:"Food & Drink", guide:"Buon appetito!", color:"#ff9600", lessons:[
+   { name:"At the table", cards:[["il pane","the bread"],["l'acqua","the water"],["il vino","the wine"],["la pasta","the pasta"],["il formaggio","the cheese"],["il caffè","the coffee"],["la mela","the apple"],["la carne","the meat"]],
+     sentences:[["Vorrei un caffè","I'd like a coffee"],["L'acqua è fredda","The water is cold"]] },
+   { name:"Ordering", cards:[["vorrei","I would like"],["mangiare","to eat"],["bere","to drink"],["il conto","the bill"],["per favore","please"],["delizioso","delicious"],["il cameriere","the waiter"],["il menù","the menu"]],
+     sentences:[["Il conto, per favore","The bill, please"],["Vorrei mangiare la pasta","I'd like to eat pasta"]] },
+ ]},
+ { unit:"Unit 4", title:"Getting Around", guide:"Andiamo!", color:"var(--purple)", lessons:[
+   { name:"Places", cards:[["la città","the city"],["la stazione","the station"],["l'albergo","the hotel"],["il ristorante","the restaurant"],["la strada","the street"],["a sinistra","to the left"],["a destra","to the right"],["dritto","straight ahead"]],
+     sentences:[["Dov'è la stazione?","Where is the station?"],["Giri a destra","Turn right"]] },
+   { name:"Travel", cards:[["il treno","the train"],["l'autobus","the bus"],["la macchina","the car"],["l'aereo","the plane"],["arrivare","to arrive"],["il biglietto","the ticket"],["l'aeroporto","the airport"],["la valigia","the suitcase"]],
+     sentences:[["Prendo il treno","I take the train"],["Un biglietto, per favore","One ticket, please"]] },
+ ]},
+ { unit:"Unit 5", title:"Time & Routine", guide:"Che ora è?", color:"var(--green)", lessons:[
+   { name:"Days & time", cards:[["oggi","today"],["domani","tomorrow"],["ieri","yesterday"],["la mattina","the morning"],["la sera","the evening"],["adesso","now"],["sempre","always"],["la settimana","the week"]],
+     sentences:[["Che ora è?","What time is it?"],["Ci vediamo domani","See you tomorrow"]] },
+   { name:"Daily verbs", cards:[["svegliarsi","to wake up"],["lavorare","to work"],["dormire","to sleep"],["studiare","to study"],["leggere","to read"],["fare","to do / make"],["uscire","to go out"],["tornare","to return"]],
+     sentences:[["Lavoro ogni giorno","I work every day"],["Studio l'italiano","I study Italian"]] },
+ ]},
+ { unit:"Unit 6", title:"Feelings & Talk", guide:"Come va?", color:"var(--blue)", lessons:[
+   { name:"Emotions", cards:[["felice","happy"],["triste","sad"],["stanco","tired"],["arrabbiato","angry"],["contento","glad"],["preoccupato","worried"],["spaventato","scared"],["annoiato","bored"]],
+     sentences:[["Sono molto felice","I'm very happy"],["Sei stanco?","Are you tired?"]] },
+   { name:"Conversation", cards:[["capisco","I understand"],["non capisco","I don't understand"],["puoi ripetere?","can you repeat?"],["parli inglese?","do you speak English?"],["lentamente","slowly"],["certo","of course"],["forse","maybe"],["va bene","okay / fine"]],
+     sentences:[["Non capisco, puoi ripetere?","I don't understand, can you repeat?"],["Parli più lentamente","Speak more slowly"]] },
+ ]},
+ { unit:"Unit 7", title:"Shopping & Money", guide:"Quanto costa?", color:"#ff9600", lessons:[
+   { name:"At the shop", cards:[["il negozio","the shop"],["comprare","to buy"],["i soldi","the money"],["quanto costa?","how much is it?"],["caro","expensive"],["economico","cheap"],["il mercato","the market"],["la cassa","the checkout"]],
+     sentences:[["Quanto costa questo?","How much is this?"],["È troppo caro","It's too expensive"]] },
+   { name:"Clothes", cards:[["i vestiti","the clothes"],["la camicia","the shirt"],["i pantaloni","the trousers"],["le scarpe","the shoes"],["il cappotto","the coat"],["indossare","to wear"],["la taglia","the size"],["il colore","the colour"]],
+     sentences:[["Cerco una camicia","I'm looking for a shirt"],["Che taglia porta?","What size are you?"]] },
+ ]},
+ { unit:"Unit 8", title:"House & Home", guide:"Casa dolce casa", color:"var(--purple)", lessons:[
+   { name:"Rooms", cards:[["la casa","the house"],["la cucina","the kitchen"],["la camera","the bedroom"],["il bagno","the bathroom"],["il salotto","the living room"],["la porta","the door"],["la finestra","the window"],["il giardino","the garden"]],
+     sentences:[["La cucina è grande","The kitchen is big"],["Vado in camera","I'm going to the bedroom"]] },
+   { name:"Objects", cards:[["il tavolo","the table"],["la sedia","the chair"],["il letto","the bed"],["la lampada","the lamp"],["lo specchio","the mirror"],["il frigorifero","the fridge"],["la chiave","the key"],["pulire","to clean"]],
+     sentences:[["Dov'è la chiave?","Where is the key?"],["Pulisco la cucina","I clean the kitchen"]] },
+ ]},
+ { unit:"Unit 9", title:"Weather & Nature", guide:"Che tempo fa?", color:"var(--green)", lessons:[
+   { name:"Weather", cards:[["il sole","the sun"],["la pioggia","the rain"],["il vento","the wind"],["la neve","the snow"],["caldo","hot"],["freddo","cold"],["nuvoloso","cloudy"],["il cielo","the sky"]],
+     sentences:[["Fa caldo oggi","It's hot today"],["Piove molto","It rains a lot"]] },
+   { name:"Nature", cards:[["il mare","the sea"],["la montagna","the mountain"],["il fiume","the river"],["l'albero","the tree"],["il fiore","the flower"],["il bosco","the woods"],["la spiaggia","the beach"],["l'animale","the animal"]],
+     sentences:[["Andiamo al mare","Let's go to the sea"],["La montagna è alta","The mountain is high"]] },
+ ]},
+ { unit:"Unit 10", title:"Work & Study", guide:"Al lavoro", color:"var(--blue)", lessons:[
+   { name:"Jobs", cards:[["il lavoro","the job / work"],["il medico","the doctor"],["l'insegnante","the teacher"],["l'avvocato","the lawyer"],["l'ingegnere","the engineer"],["l'ufficio","the office"],["la riunione","the meeting"],["lo stipendio","the salary"]],
+     sentences:[["Faccio il medico","I'm a doctor"],["Ho una riunione","I have a meeting"]] },
+   { name:"School", cards:[["la scuola","the school"],["l'università","the university"],["lo studente","the student"],["il libro","the book"],["l'esame","the exam"],["imparare","to learn"],["la lezione","the lesson"],["scrivere","to write"]],
+     sentences:[["Imparo l'italiano","I'm learning Italian"],["Ho un esame domani","I have an exam tomorrow"]] },
+ ]},
+ { unit:"Unit 11", title:"Health & Body", guide:"Come ti senti?", color:"#ff9600", lessons:[
+   { name:"The body", cards:[["la testa","the head"],["la mano","the hand"],["il piede","the foot"],["l'occhio","the eye"],["la bocca","the mouth"],["il cuore","the heart"],["la schiena","the back"],["il braccio","the arm"]],
+     sentences:[["Mi fa male la testa","My head hurts"],["Ho due mani","I have two hands"]] },
+   { name:"At the doctor", cards:[["malato","sick"],["la febbre","the fever"],["la medicina","the medicine"],["il dolore","the pain"],["la farmacia","the pharmacy"],["stare male","to feel unwell"],["riposare","to rest"],["guarire","to heal"]],
+     sentences:[["Sto male oggi","I feel unwell today"],["Ho bisogno di una medicina","I need medicine"]] },
+ ]},
+ { unit:"Unit 12", title:"Numbers & Dates", guide:"Uno, due, tre", color:"var(--purple)", lessons:[
+   { name:"Numbers 1–20", cards:[["uno","one"],["due","two"],["tre","three"],["quattro","four"],["cinque","five"],["dieci","ten"],["venti","twenty"],["cento","one hundred"]],
+     sentences:[["Ho due fratelli","I have two brothers"],["Costa dieci euro","It costs ten euros"]] },
+   { name:"Calendar", cards:[["lunedì","Monday"],["venerdì","Friday"],["il mese","the month"],["gennaio","January"],["l'anno","the year"],["il compleanno","the birthday"],["la data","the date"],["il giorno","the day"]],
+     sentences:[["Oggi è lunedì","Today is Monday"],["Il mio compleanno è a maggio","My birthday is in May"]] },
+ ]},
+ { unit:"Unit 13", title:"Colours & Adjectives", guide:"Di che colore?", color:"var(--green)", lessons:[
+   { name:"Colours", cards:[["rosso","red"],["blu","blue"],["verde","green"],["giallo","yellow"],["nero","black"],["bianco","white"],["arancione","orange"],["grigio","grey"]],
+     sentences:[["La macchina è rossa","The car is red"],["Mi piace il verde","I like green"]] },
+   { name:"More adjectives", cards:[["nuovo","new"],["facile","easy"],["difficile","difficult"],["importante","important"],["forte","strong"],["debole","weak"],["pieno","full"],["vuoto","empty"]],
+     sentences:[["È molto importante","It is very important"],["L'esame è difficile","The exam is difficult"]] },
+ ]},
+ { unit:"Unit 14", title:"Pronouns & Possessives", guide:"Mio, tuo, suo", color:"var(--blue)", lessons:[
+   { name:"Object pronouns", cards:[["mi","me / to me"],["ti","you / to you"],["lo","it / him"],["la","it / her"],["ci","us / to us"],["vi","you (pl)"],["li","them (m)"],["le","them (f)"]],
+     sentences:[["Ti amo","I love you"],["Lo vedo","I see it"]] },
+   { name:"Possessives", cards:[["mio","my"],["tuo","your"],["suo","his / her"],["nostro","our"],["vostro","your (pl)"],["loro","their"],["questo","this"],["quello","that"]],
+     sentences:[["È il mio libro","It's my book"],["Questa è la tua casa","This is your house"]] },
+ ]},
+ { unit:"Unit 15", title:"Prepositions & Links", guide:"Di, a, da, in", color:"#ff9600", lessons:[
+   { name:"Prepositions", cards:[["di","of / from"],["a","to / at"],["da","from / by"],["in","in"],["con","with"],["su","on"],["per","for"],["tra","between"]],
+     sentences:[["Vado a Roma","I'm going to Rome"],["Il libro è sul tavolo","The book is on the table"]] },
+   { name:"Connectors", cards:[["e","and"],["ma","but"],["perché","because / why"],["quindi","so / therefore"],["anche","also"],["però","however"],["se","if"],["mentre","while"]],
+     sentences:[["Studio perché voglio imparare","I study because I want to learn"],["È tardi, quindi vado","It's late, so I'm going"]] },
+ ]},
+ { unit:"Unit 16", title:"Question Words", guide:"Chi? Cosa? Dove?", color:"var(--purple)", lessons:[
+   { name:"Asking", cards:[["chi?","who?"],["cosa?","what?"],["dove?","where?"],["quando?","when?"],["come?","how?"],["perché?","why?"],["quale?","which?"],["quanto?","how much?"]],
+     sentences:[["Dove abiti?","Where do you live?"],["Quando arrivi?","When do you arrive?"]] },
+   { name:"Opinions", cards:[["penso","I think"],["credo","I believe"],["secondo me","in my opinion"],["sono d'accordo","I agree"],["hai ragione","you're right"],["mi piace","I like"],["preferisco","I prefer"],["mi sembra","it seems to me"]],
+     sentences:[["Secondo me è giusto","In my opinion it's right"],["Mi piace molto","I like it a lot"]] },
+ ]},
+ { unit:"Unit 17", title:"Hobbies & Free Time", guide:"Tempo libero", color:"var(--green)", lessons:[
+   { name:"Activities", cards:[["la musica","the music"],["il film","the film"],["lo sport","the sport"],["il gioco","the game"],["ballare","to dance"],["cantare","to sing"],["viaggiare","to travel"],["cucinare","to cook"]],
+     sentences:[["Mi piace ballare","I like to dance"],["Guardo un film","I'm watching a film"]] },
+   { name:"Sports", cards:[["il calcio","football"],["nuotare","to swim"],["correre","to run"],["la palestra","the gym"],["la squadra","the team"],["vincere","to win"],["perdere","to lose"],["giocare","to play"]],
+     sentences:[["Gioco a calcio","I play football"],["Vado in palestra","I go to the gym"]] },
+ ]},
+ { unit:"Unit 18", title:"Technology", guide:"Online", color:"var(--blue)", lessons:[
+   { name:"Devices", cards:[["il telefono","the phone"],["il computer","the computer"],["internet","internet"],["il messaggio","the message"],["la foto","the photo"],["chiamare","to call"],["inviare","to send"],["lo schermo","the screen"]],
+     sentences:[["Ti chiamo dopo","I'll call you later"],["Mando un messaggio","I'm sending a message"]] },
+   { name:"Online", cards:[["la password","the password"],["il sito","the website"],["scaricare","to download"],["cercare","to search"],["la mail","the email"],["salvare","to save"],["l'app","the app"],["connettere","to connect"]],
+     sentences:[["Cerco su internet","I search on the internet"],["Salva il file","Save the file"]] },
+ ]},
+ { unit:"Unit 19", title:"Animals & Nature II", guide:"Gli animali", color:"#ff9600", lessons:[
+   { name:"Animals", cards:[["il cane","the dog"],["il gatto","the cat"],["il cavallo","the horse"],["l'uccello","the bird"],["il pesce","the fish"],["la mucca","the cow"],["il topo","the mouse"],["il leone","the lion"]],
+     sentences:[["Ho un cane","I have a dog"],["Il gatto dorme","The cat is sleeping"]] },
+   { name:"Outdoors", cards:[["il parco","the park"],["il lago","the lake"],["l'isola","the island"],["il campo","the field"],["la collina","the hill"],["la stella","the star"],["la luna","the moon"],["la terra","the earth"]],
+     sentences:[["Andiamo al parco","Let's go to the park"],["La luna è bella","The moon is beautiful"]] },
+ ]},
+ { unit:"Unit 20", title:"Modal & Common Verbs", guide:"Posso, voglio, devo", color:"var(--purple)", lessons:[
+   { name:"Modals", cards:[["potere","to be able to"],["volere","to want"],["dovere","to have to"],["sapere","to know (how)"],["posso","I can"],["voglio","I want"],["devo","I must"],["so","I know"]],
+     sentences:[["Posso aiutarti?","Can I help you?"],["Devo andare","I have to go"]] },
+   { name:"Frequent verbs", cards:[["dare","to give"],["prendere","to take"],["mettere","to put"],["trovare","to find"],["pensare","to think"],["sentire","to hear / feel"],["aprire","to open"],["chiudere","to close"]],
+     sentences:[["Prendo un caffè","I'll have a coffee"],["Chiudi la porta","Close the door"]] },
+ ]},
+ { unit:"Unit 21", title:"Comparisons & Quantity", guide:"Più o meno", color:"var(--green)", lessons:[
+   { name:"Comparing", cards:[["più","more"],["meno","less"],["molto","very / a lot"],["poco","little / few"],["troppo","too much"],["abbastanza","enough"],["il migliore","the best"],["peggio","worse"]],
+     sentences:[["Questo è più grande","This is bigger"],["Ho poco tempo","I have little time"]] },
+   { name:"Quantities", cards:[["tutto","everything / all"],["niente","nothing"],["qualcosa","something"],["qualcuno","someone"],["ogni","every"],["alcuni","some"],["nessuno","no one"],["entrambi","both"]],
+     sentences:[["Non ho niente","I have nothing"],["Voglio tutto","I want everything"]] },
+ ]},
+ { unit:"Unit 22", title:"Past Tense", guide:"Ieri…", color:"var(--blue)", lessons:[
+   { name:"Passato prossimo", cards:[["ho mangiato","I ate"],["ho fatto","I did"],["sono andato","I went"],["ho visto","I saw"],["ho detto","I said"],["sono stato","I was / have been"],["ho avuto","I had"],["è arrivato","he arrived"]],
+     sentences:[["Ieri ho mangiato la pizza","Yesterday I ate pizza"],["Sono andato a Roma","I went to Rome"]] },
+   { name:"Imperfetto", cards:[["ero","I was"],["avevo","I had"],["facevo","I was doing"],["andavo","I used to go"],["c'era","there was"],["da bambino","as a child"],["di solito","usually"],["mentre","while"]],
+     sentences:[["Quando ero piccolo","When I was little"],["Da bambino andavo al mare","As a child I went to the sea"]] },
+ ]},
+ { unit:"Unit 23", title:"Future & Conditional", guide:"Domani e se…", color:"#ff9600", lessons:[
+   { name:"Future", cards:[["andrò","I will go"],["farò","I will do"],["sarò","I will be"],["avrò","I will have"],["domani","tomorrow"],["il prossimo anno","next year"],["presto","soon"],["dopo","after / later"]],
+     sentences:[["Domani andrò al mare","Tomorrow I'll go to the sea"],["Sarò felice","I will be happy"]] },
+   { name:"Conditional", cards:[["vorrei","I would like"],["potrei","I could"],["dovrei","I should"],["sarebbe","it would be"],["mi piacerebbe","I would like"],["se potessi","if I could"],["magari","if only / maybe"],["volentieri","gladly"]],
+     sentences:[["Vorrei un caffè","I would like a coffee"],["Mi piacerebbe venire","I would like to come"]] },
+ ]},
+ { unit:"Unit 24", title:"Travel & Holidays II", guide:"In vacanza", color:"var(--purple)", lessons:[
+   { name:"Holidays", cards:[["la vacanza","the holiday"],["il viaggio","the trip"],["la spiaggia","the beach"],["la prenotazione","the booking"],["il passaporto","the passport"],["la mappa","the map"],["il souvenir","the souvenir"],["visitare","to visit"]],
+     sentences:[["Vado in vacanza","I'm going on holiday"],["Visito il museo","I visit the museum"]] },
+   { name:"At the hotel", cards:[["la camera doppia","the double room"],["la chiave","the key"],["la colazione","the breakfast"],["la reception","the reception"],["disponibile","available"],["prenotare","to book"],["la notte","the night"],["il bagaglio","the luggage"]],
+     sentences:[["Ho una prenotazione","I have a booking"],["A che ora è la colazione?","What time is breakfast?"]] },
+ ]},
+];
+
+/* ---------- CONJUGATION GYM (5 tenses, regular generator + irregulars) ---------- */
+const PRONOUNS=["io","tu","lui/lei","noi","voi","loro"];
+const TENSES=[
+  {key:"present",name:"Present"},
+  {key:"passato",name:"Passato prossimo"},
+  {key:"imperfetto",name:"Imperfetto"},
+  {key:"futuro",name:"Future"},
+  {key:"condizionale",name:"Conditional"},
+];
+const AUX={ avere:["ho","hai","ha","abbiamo","avete","hanno"], essere:["sono","sei","è","siamo","siete","sono"] };
+const REG_PRES={are:["o","i","a","iamo","ate","ano"],ere:["o","i","e","iamo","ete","ono"],ire:["o","i","e","iamo","ite","ono"],isc:["isco","isci","isce","iamo","ite","iscono"]};
+const REG_IMP={are:["avo","avi","ava","avamo","avate","avano"],ere:["evo","evi","eva","evamo","evate","evano"],ire:["ivo","ivi","iva","ivamo","ivate","ivano"]};
+const FUT_END=["ò","ai","à","emo","ete","anno"];
+const COND_END=["ei","esti","ebbe","emmo","este","ebbero"];
+
+const VERBS=[
+  {inf:"parlare",en:"to speak",g:"are",aux:"avere",part:"parlato"},
+  {inf:"lavorare",en:"to work",g:"are",aux:"avere",part:"lavorato"},
+  {inf:"credere",en:"to believe",g:"ere",aux:"avere",part:"creduto"},
+  {inf:"dormire",en:"to sleep",g:"ire",aux:"avere",part:"dormito"},
+  {inf:"capire",en:"to understand",g:"isc",aux:"avere",part:"capito"},
+  {inf:"partire",en:"to leave",g:"ire",aux:"essere",part:"partito"},
+  {inf:"essere",en:"to be",g:"ere",aux:"essere",part:"stato",
+    irr:{present:["sono","sei","è","siamo","siete","sono"],imperfetto:["ero","eri","era","eravamo","eravate","erano"],
+         futuro:["sarò","sarai","sarà","saremo","sarete","saranno"],condizionale:["sarei","saresti","sarebbe","saremmo","sareste","sarebbero"]}},
+  {inf:"avere",en:"to have",g:"ere",aux:"avere",part:"avuto",
+    irr:{present:["ho","hai","ha","abbiamo","avete","hanno"],
+         futuro:["avrò","avrai","avrà","avremo","avrete","avranno"],condizionale:["avrei","avresti","avrebbe","avremmo","avreste","avrebbero"]}},
+  {inf:"fare",en:"to do/make",g:"are",aux:"avere",part:"fatto",
+    irr:{present:["faccio","fai","fa","facciamo","fate","fanno"],imperfetto:["facevo","facevi","faceva","facevamo","facevate","facevano"],
+         futuro:["farò","farai","farà","faremo","farete","faranno"],condizionale:["farei","faresti","farebbe","faremmo","fareste","farebbero"]}},
+  {inf:"andare",en:"to go",g:"are",aux:"essere",part:"andato",
+    irr:{present:["vado","vai","va","andiamo","andate","vanno"],
+         futuro:["andrò","andrai","andrà","andremo","andrete","andranno"],condizionale:["andrei","andresti","andrebbe","andremmo","andreste","andrebbero"]}},
+  {inf:"potere",en:"to be able",g:"ere",aux:"avere",part:"potuto",
+    irr:{present:["posso","puoi","può","possiamo","potete","possono"],
+         futuro:["potrò","potrai","potrà","potremo","potrete","potranno"],condizionale:["potrei","potresti","potrebbe","potremmo","potreste","potrebbero"]}},
+  {inf:"volere",en:"to want",g:"ere",aux:"avere",part:"voluto",
+    irr:{present:["voglio","vuoi","vuole","vogliamo","volete","vogliono"],
+         futuro:["vorrò","vorrai","vorrà","vorremo","vorrete","vorranno"],condizionale:["vorrei","vorresti","vorrebbe","vorremmo","vorreste","vorrebbero"]}},
+  {inf:"dovere",en:"to have to",g:"ere",aux:"avere",part:"dovuto",
+    irr:{present:["devo","devi","deve","dobbiamo","dovete","devono"],
+         futuro:["dovrò","dovrai","dovrà","dovremo","dovrete","dovranno"],condizionale:["dovrei","dovresti","dovrebbe","dovremmo","dovreste","dovrebbero"]}},
+  {inf:"venire",en:"to come",g:"ire",aux:"essere",part:"venuto",
+    irr:{present:["vengo","vieni","viene","veniamo","venite","vengono"],
+         futuro:["verrò","verrai","verrà","verremo","verrete","verranno"],condizionale:["verrei","verresti","verrebbe","verremmo","verreste","verrebbero"]}},
+];
+function stem(inf){ return inf.slice(0,-3); }
+function futBase(v){ let b=v.inf.slice(0,-1); if(v.g==="are") b=b.slice(0,-2)+"er"; return b; }
+function conjugate(v,tense){
+  if(v.irr&&v.irr[tense]) return v.irr[tense];
+  if(tense==="present"){ const e=REG_PRES[v.g]; return e.map(x=>stem(v.inf)+x); }
+  if(tense==="imperfetto"){ const e=REG_IMP[v.g==="isc"?"ire":v.g]; return e.map(x=>stem(v.inf)+x); }
+  if(tense==="futuro"){ const b=futBase(v); return FUT_END.map(x=>b+x); }
+  if(tense==="condizionale"){ const b=futBase(v); return COND_END.map(x=>b+x); }
+  if(tense==="passato"){
+    if(v.aux==="essere"){ const base=v.part.slice(0,-1); const agr=["o","o","o","i","i","i"];
+      return AUX.essere.map((a,i)=>a+" "+base+agr[i]); }
+    return AUX.avere.map(a=>a+" "+v.part);
+  }
+  return [];
+}
+
+/* ---------- STATE ---------- */
+const SAVE_KEY="impara_save_v3";
+const defaultState={ xp:0,gems:0,hearts:5,streak:0,lastDay:null,completed:{},srs:{},theme:"light",lastHeart:Date.now(),voiceURI:"" };
+let S=load();
+function load(){ try{ const r=JSON.parse(localStorage.getItem(SAVE_KEY)); if(r) return {...defaultState,...r};
+  const old=JSON.parse(localStorage.getItem("impara_save_v2")); return old?{...defaultState,...old}:{...defaultState}; }
+  catch(e){ return {...defaultState}; } }
+function save(){ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }
+
+function regenHearts(){ if(S.hearts>=5){ S.lastHeart=Date.now(); return; }
+  const g=Math.floor((Date.now()-(S.lastHeart||Date.now()))/120e4); if(g>0){ S.hearts=Math.min(5,S.hearts+g); S.lastHeart=Date.now(); save(); } }
+
+function lessonId(u,l){ return u+"-"+l; }
+function isDone(u,l){ return !!S.completed[lessonId(u,l)]; }
+function totalLessons(){ return CURRICULUM.reduce((a,u)=>a+u.lessons.length,0); }
+function doneCount(){ return Object.keys(S.completed).length; }
+function isUnlocked(u,l){ if(u===0&&l===0) return true; if(l>0) return isDone(u,l-1);
+  const p=CURRICULUM[u-1]; return isDone(u-1,p.lessons.length-1); }
+
+/* ---------- SRS ---------- */
+const SRS_GAPS=[0,4*36e5,24*36e5,3*24*36e5,7*24*36e5,21*24*36e5,60*24*36e5];
+function srsTouch(it,en,correct){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en;
+  e.s=correct?Math.min(6,e.s+1):Math.max(0,e.s-1); e.due=Date.now()+SRS_GAPS[e.s]; S.srs[it]=e; }
+function dueCount(){ const n=Date.now(); return Object.values(S.srs).filter(e=>e.due<=n).length; }
+
+/* ---------- streak ---------- */
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
+function bumpStreak(){ const t=todayStr(); if(S.lastDay===t) return;
+  const yd=new Date(Date.now()-864e5); const y=yd.getFullYear()+"-"+yd.getMonth()+"-"+yd.getDate();
+  S.streak=(S.lastDay===y)?S.streak+1:1; S.lastDay=t; }
+
+/* ============ THEME ============ */
+function applyTheme(){ document.documentElement.dataset.theme=S.theme; document.getElementById("themeBtn").textContent=S.theme==="dark"?"☀️":"🌙"; }
+document.getElementById("themeBtn").onclick=()=>{ S.theme=S.theme==="dark"?"light":"dark"; save(); applyTheme(); };
+
+/* ============ VOICE ============ */
+let VOICES=[];
+function loadVoices(){ VOICES=(window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>v.lang&&v.lang.toLowerCase().startsWith("it")); }
+function scoreVoice(v){ const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
+  if(n.includes("natural")||n.includes("online")) s+=100;
+  if(/(isabella|elsa|diego|giuseppe|fabiola|imelda|palmira)/.test(n)) s+=40;
+  if(n.includes("google")) s+=30; if(n.includes("alice")) s+=10; return s; }
+function pickVoice(){ loadVoices(); if(!VOICES.length) return null;
+  if(S.voiceURI){ const m=VOICES.find(v=>v.voiceURI===S.voiceURI); if(m) return m; }
+  return [...VOICES].sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]; }
+function speak(text){ if(!text||!window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(text);
+  u.lang="it-IT"; u.rate=.9; const v=pickVoice(); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+
+/* ============ HOME ============ */
+function renderHome(){
+  regenHearts();
+  document.getElementById("streak").textContent=S.streak;
+  document.getElementById("gems").textContent=S.gems;
+  document.getElementById("hearts").textContent=S.hearts;
+  const path=document.getElementById("path"); path.innerHTML="";
+  CURRICULUM.forEach((unit,ui)=>{
+    const b=document.createElement("div"); b.className="unit-banner"; b.style.background=unit.color;
+    b.innerHTML=`<div><h2>${unit.unit}</h2><h1>${unit.title}</h1></div><div class="guide">${unit.guide}</div>`;
+    path.appendChild(b);
+    const wrap=document.createElement("div"); wrap.className="path";
+    unit.lessons.forEach((les,li)=>{
+      const done=isDone(ui,li),unlocked=isUnlocked(ui,li);
+      const cls=done?"done":(unlocked?"current":"locked");
+      const icon=done?"👑":(unlocked?"⭐":"🔒");
+      const node=document.createElement("div"); node.className="node-wrap";
+      node.innerHTML=`<button class="node ${cls}">${icon}</button><div class="node-label">${les.name}</div>`;
+      node.querySelector("button").onclick=(unlocked||done)?(()=>startLesson(ui,li)):(()=>toast("Finish the previous lesson 🔒"));
+      node.style.marginLeft=(li%2?"70px":"-70px"); wrap.appendChild(node);
+    });
+    path.appendChild(wrap);
+  });
+  const cb=document.createElement("div"); cb.className="unit-banner"; cb.style.background="var(--purple)";
+  cb.innerHTML=`<div><h2>Grammar Gym</h2><h1>Verb Conjugation 🏛️</h1></div><div class="guide">5 tenses</div>`;
+  path.appendChild(cb);
+  const cw=document.createElement("div"); cw.className="path";
+  const cn=document.createElement("div"); cn.className="node-wrap";
+  cn.innerHTML=`<button class="node conj">🔤</button><div class="node-label">Conjugation drill</div>`;
+  cn.querySelector("button").onclick=startConjugation; cw.appendChild(cn); path.appendChild(cw);
+  refreshBadges();
+}
+
+/* ============ QUESTION BUILDERS ============ */
+function buildQueue(unit,lesson){
+  const les=CURRICULUM[unit].lessons[lesson];
+  const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards));
+  const q=[];
+  les.cards.forEach(c=>q.push(makeMC(c,all,"it2en")));
+  les.cards.filter((_,i)=>i%2===0).forEach(c=>q.push(makeMC(c,all,"en2it")));
+  les.cards.filter((_,i)=>i%2===1).forEach(c=>q.push(makeListen(c,all)));
+  les.sentences.forEach(s=>q.push(makeBank(s)));
+  les.sentences.forEach(s=>q.push(makeType(s)));
+  q.push(makeMatch(les.cards.slice(0,5)));
+  return shuffle(q);
+}
+function sample(arr,n,ex){ return shuffle(arr.filter(x=>x[0]!==ex)).slice(0,n); }
+function makeMC(card,all,dir){ const [it,en]=card;
+  if(dir==="it2en"){ const opts=shuffle([en,...sample(all,3,it).map(c=>c[1])]);
+    return {type:"mc",qtype:"Select the meaning",prompt:it,speak:it,options:opts,answer:en,label:"What does this mean?",term:it,termEn:en}; }
+  const opts=shuffle([it,...sample(all,3,it).map(c=>c[0])]);
+  return {type:"mc",qtype:"Select the translation",prompt:en,speak:null,options:opts,answer:it,label:"How do you say this?",term:it,termEn:en}; }
+function makeListen(card,all){ const [it,en]=card; const opts=shuffle([en,...sample(all,3,it).map(c=>c[1])]);
+  return {type:"mc",qtype:"Listening",prompt:"🔊 Tap to listen",speak:it,options:opts,answer:en,label:"What did you hear?",listen:true,term:it,termEn:en}; }
+function makeBank(sent){ const [it,en]=sent; const words=it.split(" ");
+  const extra=["è","la","molto","con","non","un"].filter(w=>!words.includes(w)).slice(0,2);
+  return {type:"bank",qtype:"Build the sentence",prompt:en,speak:it,tiles:shuffle([...words,...extra]),answer:words,label:"Translate this sentence",term:it,termEn:en}; }
+function makeType(sent){ const [it,en]=sent;
+  return {type:"type",qtype:"Write in Italian",prompt:en,speak:it,answer:it,label:"Write this in Italian",term:it,termEn:en}; }
+function makeMatch(cards){ return {type:"match",qtype:"Match the pairs",pairs:cards.map(c=>({it:c[0],en:c[1]})),label:"Tap the matching pairs"}; }
+function makeDictation(sent){ const [it,en]=sent;
+  return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:en,speak:it,answer:it,label:"Listen and type what you hear",term:it,termEn:en}; }
+
+function makeConj(){
+  const v=VERBS[Math.floor(Math.random()*VERBS.length)];
+  const t=TENSES[Math.floor(Math.random()*TENSES.length)];
+  const idx=Math.floor(Math.random()*6);
+  const forms=conjugate(v,t.key); const answer=forms[idx];
+  const wrong=new Set();
+  forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
+  while(wrong.size<3){ const ov=VERBS[Math.floor(Math.random()*VERBS.length)]; const f=conjugate(ov,t.key)[Math.floor(Math.random()*6)]; if(f!==answer) wrong.add(f); }
+  const opts=shuffle([answer,...[...wrong].slice(0,3)]);
+  return {type:"mc",qtype:"Conjugation · "+t.name,prompt:null,conj:{pronoun:PRONOUNS[idx],inf:v.inf,en:v.en,tense:t.name},
+    options:opts,answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PRONOUNS[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
+
+/* gender / article */
+function genderItems(){ const out=[]; CURRICULUM.forEach(u=>u.lessons.forEach(l=>l.cards.forEach(c=>{
+  const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }))); return out; }
+function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",prompt:null,gender:{noun:item.noun,en:item.en},
+  options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
+
+/* ============ SESSION FLOW ============ */
+let L=null;
+function startLesson(u,l){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
+  L={unit:u,lesson:l,queue:buildQueue(u,l),i:0,correct:0,mistakes:0,wrongQ:[],mode:"lesson"}; show("lesson"); renderQuestion(); }
+function startConjugation(){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
+  const q=[]; for(let k=0;k<15;k++) q.push(makeConj()); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
+function startPractice(){ regenHearts(); const done=Object.keys(S.completed);
+  const pool=done.length?done.map(k=>k.split("-").map(Number)):[[0,0]];
+  let q=[]; pool.forEach(([u,l])=>q.push(...buildQueue(u,l))); q=shuffle(q).slice(0,12);
+  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"practice"}; show("lesson"); renderQuestion(); }
+function startReview(){ const n=Date.now();
+  let due=Object.entries(S.srs).filter(([it,e])=>e.due<=n).map(([it,e])=>[it,e.en]);
+  if(!due.length){ toast("Nothing due! Come back later 🔁"); return; }
+  due=shuffle(due).slice(0,15); const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards));
+  const q=due.map(c=>Math.random()<.5?makeMC(c,all,"it2en"):makeMC(c,all,"en2it"));
+  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"review"}; show("lesson"); renderQuestion(); }
+function startDictation(){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
+  const sents=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.sentences));
+  const q=shuffle(sents).slice(0,10).map(makeDictation); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"dictation"}; show("lesson"); renderQuestion(); }
+function startGender(){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
+  const q=shuffle(genderItems()).slice(0,15).map(makeGender); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"gender"}; show("lesson"); renderQuestion(); }
+function startHardest(){ const entries=Object.entries(S.srs);
+  if(entries.length<4){ toast("Learn a few lessons first 🧠"); return; }
+  const sorted=entries.sort((a,b)=>(a[1].s-b[1].s)||(a[1].due-b[1].due)).slice(0,15).map(([it,e])=>[it,e.en]);
+  const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards));
+  const q=sorted.map(c=>Math.random()<.5?makeMC(c,all,"en2it"):makeMC(c,all,"it2en"));
+  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"hardest"}; show("lesson"); renderQuestion(); }
+
+function show(view){ document.getElementById("home").classList.toggle("hidden",view!=="home");
+  document.getElementById("lesson").classList.toggle("hidden",view!=="lesson");
+  document.getElementById("nav").classList.toggle("hidden",view==="lesson"); }
+
+function renderQuestion(){
+  const el=document.getElementById("lesson"); const q=L.queue[L.i]; const pct=Math.round((L.i/L.queue.length)*100);
+  el.innerHTML=`<div class="progress-row"><button class="close" id="closeBtn">✕</button>
+      <div class="bar"><div style="width:${pct}%"></div></div><div class="mini-heart">❤️ ${S.hearts}</div></div>
+    <div class="q-type">${q.qtype}</div><div class="q-title">${q.label}</div>
+    <div id="qbody"></div><div class="foot" id="foot"><button class="btn" id="checkBtn" disabled>Check</button></div>`;
+  document.getElementById("closeBtn").onclick=()=>{ if(confirm("Quit? This session's progress is lost.")) goHome(); };
+  const body=document.getElementById("qbody");
+  if(q.type==="mc") renderMC(q,body);
+  else if(q.type==="bank") renderBank(q,body);
+  else if(q.type==="type") renderType(q,body);
+  else if(q.type==="match") renderMatch(q,body);
+}
+function renderMC(q,body){
+  let sel=null,head="";
+  if(q.conj){ head=`<div class="ctx">${q.conj.inf} — ${q.conj.en} · <b>${q.conj.tense}</b></div><div class="conj-pronoun">${q.conj.pronoun} ___</div>`; }
+  else if(q.gender){ head=`<div class="ctx">${q.gender.en}</div><div class="gender-noun">___ ${q.gender.noun}</div>`; }
+  else { const sp=q.speak?`<div class="speaker" id="spk">🔊</div>`:""; const ph=q.listen?"":`<div class="phrase">${q.prompt}</div>`; head=sp+ph; }
+  body.innerHTML=`${head}<div class="choices"></div>`;
+  if(q.speak&&!q.conj&&!q.gender&&document.getElementById("spk")){ document.getElementById("spk").onclick=()=>speak(q.speak); if(q.listen) speak(q.speak); }
+  const wrap=body.querySelector(".choices");
+  q.options.forEach((opt,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="num">${i+1}</span>${opt}`;
+    b.onclick=()=>{ sel=opt; [...wrap.children].forEach(c=>c.classList.remove("sel")); b.classList.add("sel"); enableCheck(); }; wrap.appendChild(b); });
+  setCheck(()=>{ const right=sel===q.answer;
+    [...wrap.children].forEach(c=>{ const t=c.textContent.replace(/^\d/,"").trim();
+      if(t===q.answer) c.classList.add("right"); else if(t===sel) c.classList.add("wrong"); c.style.pointerEvents="none"; });
+    return {right,correct:q.gender?(q.answer+" "+q.gender.noun):q.answer}; },()=>sel!==null);
+}
+function renderBank(q,body){
+  body.innerHTML=`<div class="speaker" id="spk">🔊</div><div class="phrase">${q.prompt}</div><div class="answer-area" id="ans"></div><div class="bank" id="bank"></div>`;
+  document.getElementById("spk").onclick=()=>speak(q.speak);
+  const ans=document.getElementById("ans"),bank=document.getElementById("bank");
+  q.tiles.forEach(w=>{ const t=document.createElement("button"); t.className="tile"; t.textContent=w;
+    t.onclick=()=>{ t.classList.add("used"); const a=document.createElement("button"); a.className="tile"; a.textContent=w;
+      a.onclick=()=>{ a.remove(); t.classList.remove("used"); enableCheck(); }; ans.appendChild(a); enableCheck(); }; bank.appendChild(t); });
+  setCheck(()=>{ const got=[...ans.children].map(c=>c.textContent); return {right:got.join(" ")===q.answer.join(" "),correct:q.answer.join(" ")}; },()=>ans.children.length>0);
+}
+function renderType(q,body){
+  const head=q.dictation?`<div class="speaker" id="spk">🔊</div><div class="ctx">hint: ${q.hint}</div>`:`<div class="speaker" id="spk">🔊</div><div class="phrase">${q.prompt}</div>`;
+  body.innerHTML=`${head}<div class="tip">Accents & capitals optional (caffe = caffè).</div><input class="type" id="typed" placeholder="Type in Italian…" autocomplete="off" autocapitalize="off"/>`;
+  document.getElementById("spk").onclick=()=>speak(q.speak); if(q.dictation) speak(q.speak);
+  const inp=document.getElementById("typed");
+  inp.oninput=()=>{ inp.value.trim()?enableCheck():disableCheck(); };
+  inp.onkeydown=e=>{ if(e.key==="Enter"&&!document.getElementById("checkBtn").disabled) doCheck(); };
+  inp.focus();
+  const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[.,!?;']/g,"").replace(/\s+/g," ").trim();
+  setCheck(()=>({right:norm(inp.value)===norm(q.answer),correct:q.answer}),()=>inp.value.trim().length>0);
+}
+function renderMatch(q,body){
+  const left=shuffle(q.pairs.map(p=>p.it)),right=shuffle(q.pairs.map(p=>p.en));
+  body.innerHTML=`<div class="match-grid" id="mg"></div>`; const mg=document.getElementById("mg");
+  const make=(t,s)=>{ const b=document.createElement("button"); b.textContent=t; b.dataset.side=s; b.dataset.text=t; return b; };
+  const items=[]; for(let i=0;i<q.pairs.length;i++){ items.push(make(left[i],"it")); items.push(make(right[i],"en")); }
+  let selBtn=null,solved=0;
+  items.forEach(b=>{ b.onclick=()=>{
+    if(b.dataset.side==="it") speak(b.dataset.text);
+    if(selBtn===b){ b.classList.remove("sel"); selBtn=null; return; }
+    if(!selBtn){ selBtn=b; b.classList.add("sel"); return; }
+    if(selBtn.dataset.side===b.dataset.side){ selBtn.classList.remove("sel"); selBtn=b; b.classList.add("sel"); return; }
+    const itTxt=selBtn.dataset.side==="it"?selBtn.dataset.text:b.dataset.text, enTxt=selBtn.dataset.side==="en"?selBtn.dataset.text:b.dataset.text;
+    if(q.pairs.some(p=>p.it===itTxt&&p.en===enTxt)){ selBtn.classList.add("gone"); b.classList.add("gone"); selBtn.classList.remove("sel"); selBtn=null; solved++; if(solved===q.pairs.length) enableCheck(); }
+    else { const a=selBtn; a.classList.add("wrong-flash"); b.classList.add("wrong-flash"); setTimeout(()=>{a.classList.remove("sel","wrong-flash"); b.classList.remove("wrong-flash");},400); selBtn=null; toast("Not a match"); }
+  }; mg.appendChild(b); });
+  setCheck(()=>({right:true,correct:""}),()=>solved===q.pairs.length);
+}
+
+let _checkFn=null,_canCheck=null;
+function setCheck(fn,can){ _checkFn=fn; _canCheck=can; document.getElementById("checkBtn").onclick=doCheck; }
+function enableCheck(){ if(_canCheck&&_canCheck()) document.getElementById("checkBtn").disabled=false; }
+function disableCheck(){ document.getElementById("checkBtn").disabled=true; }
+function doCheck(){ const {right,correct}=_checkFn(); const q=L.queue[L.i];
+  if(right) L.correct++; else { L.mistakes++; if(S.hearts===5)S.lastHeart=Date.now(); S.hearts=Math.max(0,S.hearts-1); L.wrongQ.push(q); }
+  if(q.term) srsTouch(q.term,q.termEn||"",right);
+  if(right&&q.speak) speak(q.speak);
+  showResult(right,correct); save(); }
+function showResult(right,correct){ const foot=document.getElementById("foot");
+  foot.className="foot show-result "+(right?"correct":"incorrect");
+  foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Bravo!":"❌ Correct answer:"}${right?"":`<span class="sub">${correct}</span>`}</div>
+    <button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
+  document.getElementById("contBtn").onclick=next; }
+const HEART_MODES=["lesson","conj","dictation","gender"];
+function next(){ L.i++;
+  if(S.hearts<=0&&HEART_MODES.includes(L.mode)) return failScreen();
+  if(L.i>=L.queue.length){ if(L.wrongQ.length){ L.queue.push(...L.wrongQ); L.wrongQ=[]; renderQuestion(); return; } return completeSession(); }
+  renderQuestion(); }
+
+function completeSession(){
+  const acc=Math.round((L.correct/(L.correct+L.mistakes||1))*100); bumpStreak(); let html;
+  if(L.mode==="conj"){ S.xp+=20; S.gems+=10;
+    html=`<div class="big">🏛️</div><h1 style="color:var(--purple)">Conjugation mastered!</h1>
+      <div class="reward-row"><div class="reward purple"><div class="lbl">XP</div><div class="val">+20</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
+  } else if(L.mode==="practice"){ S.gems+=5; S.hearts=Math.min(5,S.hearts+2);
+    html=`<div class="big">🏋️</div><h1 style="color:var(--blue)">Practice complete!</h1>
+      <div class="reward-row"><div class="reward blue"><div class="lbl">GEMS</div><div class="val">+5</div></div><div class="reward"><div class="lbl">HEARTS</div><div class="val">+2</div></div></div>`;
+  } else if(L.mode==="review"||L.mode==="hardest"){ S.xp+=15; S.gems+=8;
+    html=`<div class="big">${L.mode==="hardest"?"🧠":"🔁"}</div><h1 style="color:var(--green)">${L.mode==="hardest"?"Tough words tackled!":"Review done!"}</h1>
+      <p>Your weakest words just got stronger. They'll resurface right before you'd forget them.</p>
+      <div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+15</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
+  } else if(L.mode==="dictation"||L.mode==="gender"){ S.xp+=15; S.gems+=6;
+    html=`<div class="big">${L.mode==="dictation"?"🎧":"⚖️"}</div><h1 style="color:var(--blue)">${L.mode==="dictation"?"Dictation done!":"Articles drilled!"}</h1>
+      <div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+15</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
+  } else { const xp=15+(L.mistakes===0?5:0); S.xp+=xp; S.gems+=10; S.completed[lessonId(L.unit,L.lesson)]=true; if(S.hearts<5)S.hearts=Math.min(5,S.hearts+1);
+    html=`<div class="big">🎉</div><h1>Lezione completata!</h1>
+      <div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${xp}</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
+  }
+  save();
+  document.getElementById("lesson").innerHTML=`<div class="center-screen">${html}<button class="btn" style="max-width:280px" id="doneBtn">Continue</button></div>`;
+  document.getElementById("doneBtn").onclick=goHome;
+}
+function failScreen(){ document.getElementById("lesson").innerHTML=`<div class="center-screen"><div class="big">💔</div>
+    <h1 style="color:var(--red)">Out of hearts</h1><p>Mistakes are how we learn. Hearts refill +1 every 20 min, or do a Review to keep going right now.</p>
+    <button class="btn blue" style="max-width:280px" id="rvBtn">Do a Review 🔁</button><button class="btn skip" style="max-width:280px" id="backBtn">Back home</button></div>`;
+  document.getElementById("rvBtn").onclick=()=>{ goHome(); startReview(); };
+  document.getElementById("backBtn").onclick=goHome; }
+function goHome(){ show("home"); document.querySelector("#home main").innerHTML='<div id="path"></div>'; renderHome(); setNav("home"); }
+
+/* ============ TRAIN MENU ============ */
+function showTrain(){ show("home"); regenHearts();
+  const due=dueCount();
+  document.querySelector("#home main").innerHTML=`
+    <div class="unit-banner" style="background:var(--blue)"><div><h2>Sharpen your skills</h2><h1>Allenamento 🏋️</h1></div></div>
+    <button class="menu-card" id="m-prac"><span class="mi">🎯</span><span><span class="mt">Quick Practice</span><span class="md">Mixed review of finished lessons · +2 hearts</span></span></button>
+    <button class="menu-card" id="m-conj"><span class="mi">🏛️</span><span><span class="mt">Conjugation Gym</span><span class="md">14 verbs across 5 tenses</span></span></button>
+    <button class="menu-card" id="m-dict"><span class="mi">🎧</span><span><span class="mt">Dictation</span><span class="md">Hear Italian, type what you hear</span></span></button>
+    <button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Master noun gender & articles</span></span></button>
+    <button class="menu-card" id="m-hard"><span class="mi">🧠</span><span><span class="mt">Hardest Words</span><span class="md">Targets your weakest vocabulary</span></span></button>
+    <button class="menu-card" id="m-rev"><span class="mi">🔁</span><span><span class="mt">Spaced Review</span><span class="md">Words due for revision</span></span>${due?`<span class="badge">${due}</span>`:""}</button>`;
+  document.getElementById("m-prac").onclick=startPractice;
+  document.getElementById("m-conj").onclick=startConjugation;
+  document.getElementById("m-dict").onclick=startDictation;
+  document.getElementById("m-gen").onclick=startGender;
+  document.getElementById("m-hard").onclick=startHardest;
+  document.getElementById("m-rev").onclick=startReview;
+}
+
+/* ============ STATS ============ */
+function showStats(){ show("home"); loadVoices();
+  const lvl=Math.floor(S.xp/100)+1,into=S.xp%100;
+  const strong=Object.values(S.srs).filter(e=>e.s>=4).length, learning=Object.keys(S.srs).length;
+  const best=pickVoice();
+  const voiceOpts=VOICES.length?VOICES.map(v=>`<option value="${v.voiceURI}" ${best&&v.voiceURI===best.voiceURI?"selected":""}>${v.name}</option>`).join(""):`<option>No Italian voice found</option>`;
+  document.querySelector("#home main").innerHTML=`
+    <div class="unit-banner" style="background:var(--blue)"><div><h2>Your progress</h2><h1>Statistiche 📊</h1></div><div class="guide">Lv. ${lvl}</div></div>
+    <div style="display:grid;gap:14px">
+      <div class="reward" style="border-color:var(--gold);text-align:center;padding:18px"><div style="font-size:13px;color:var(--muted);font-weight:800">TOTAL XP — Level ${lvl} (${into}/100)</div><div style="font-size:34px;font-weight:800;color:var(--gold)">${S.xp}</div></div>
+      <div style="display:flex;gap:14px"><div class="reward blue" style="flex:1;text-align:center"><div class="lbl">STREAK</div><div class="val">🔥 ${S.streak}</div></div><div class="reward" style="flex:1;text-align:center"><div class="lbl">GEMS</div><div class="val">💎 ${S.gems}</div></div></div>
+      <div style="display:flex;gap:14px"><div class="reward" style="flex:1;border-color:var(--green);text-align:center"><div class="lbl" style="background:var(--green)">LESSONS</div><div class="val" style="color:var(--green-dark)">${doneCount()}/${totalLessons()}</div></div><div class="reward purple" style="flex:1;text-align:center"><div class="lbl">WORDS SEEN</div><div class="val">${learning}</div></div></div>
+      <div class="reward" style="border-color:var(--green);text-align:center;padding:18px"><div style="font-size:13px;color:var(--muted);font-weight:800">WORDS MASTERED (SRS 4+)</div><div style="font-size:34px;font-weight:800;color:var(--green-dark)">${strong}</div></div>
+      <div class="settings-box"><label>🔊 Italian voice</label><select id="voiceSel">${voiceOpts}</select>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:10px">Best free voices are Microsoft's "Online (Natural)" — Isabella / Elsa / Diego. They appear automatically in <b>Microsoft Edge</b> on Windows. In Chrome you'll usually get "Google italiano". To add more, go to Windows Settings → Time &amp; Language → Speech → add Italian.</div>
+        <button class="btn blue" id="testVoice" style="margin-top:12px">▶ Test voice</button></div>
+      <button class="btn skip" id="resetBtn" style="color:var(--red)">Reset all progress</button>
+    </div>`;
+  document.getElementById("voiceSel").onchange=e=>{ S.voiceURI=e.target.value; save(); };
+  document.getElementById("testVoice").onclick=()=>speak("Ciao! Benvenuto. Imparare l'italiano è un piacere.");
+  document.getElementById("resetBtn").onclick=()=>{ if(confirm("Erase ALL progress?")){ const th=S.theme,vo=S.voiceURI; S={...defaultState,theme:th,voiceURI:vo}; save(); goHome(); } };
+}
+
+/* ============ NAV ============ */
+function setNav(v){ [...document.querySelectorAll("#nav button")].forEach(b=>b.classList.toggle("active",b.dataset.view===v)); }
+function refreshBadges(){ const rb=document.querySelector('#nav button[data-view="review"]');
+  const old=rb.querySelector(".ndot"); if(old) old.remove(); const d=dueCount();
+  if(d>0){ const s=document.createElement("span"); s.className="ndot"; s.textContent=d; rb.appendChild(s); } }
+document.querySelectorAll("#nav button").forEach(b=>{ b.onclick=()=>{ const v=b.dataset.view; setNav(v);
+  if(v==="home") goHome(); else if(v==="review") startReview(); else if(v==="train") showTrain(); else if(v==="stats") showStats(); }; });
+
+/* ---------- util ---------- */
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+let _tt; function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove("show"),1800); }
+if("speechSynthesis" in window){ speechSynthesis.onvoiceschanged=loadVoices; loadVoices(); }
+
+/* ---------- boot ---------- */
+applyTheme(); renderHome();
+</script>
+</body>
+</html>
