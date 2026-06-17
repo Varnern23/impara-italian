@@ -2,7 +2,8 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#58cc02" />
 <title>Impara · Learn Italian</title>
 <style>
   :root{
@@ -13,17 +14,12 @@
     --bg:#fff; --bg2:#f7f7f7; --ink:#3c3c3c; --muted:#afafaf;
     --border:#e5e5e5; --card:#fff;
   }
-  [data-theme="dark"]{
-    --bg:#131f24; --bg2:#1b2c34; --ink:#f1f1f1; --muted:#7b8b93;
-    --border:#37464f; --card:#1b2c34;
-  }
+  [data-theme="dark"]{ --bg:#131f24; --bg2:#1b2c34; --ink:#f1f1f1; --muted:#7b8b93; --border:#37464f; --card:#1b2c34; }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-  select{font-family:inherit}
+  select,input{font-family:inherit}
   .hidden{display:none !important}
-
   header{width:100%;max-width:640px;display:flex;align-items:center;gap:18px;padding:16px 20px;position:sticky;top:0;background:var(--bg);z-index:10}
   .stat{display:flex;align-items:center;gap:6px;font-weight:800;font-size:18px}
   .stat .ico{font-size:22px}
@@ -31,6 +27,12 @@
   .spacer{flex:1}
   .theme-btn{font-size:22px;opacity:.7}
   main{width:100%;max-width:640px;padding:0 20px 130px;flex:1}
+
+  .goal-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 16px;margin:14px 0 4px;display:flex;align-items:center;gap:14px}
+  .ring{--p:0;width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--green) calc(var(--p)*1%),var(--border) 0);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .ring span{width:42px;height:42px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .goal-card .gt{font-weight:800}
+  .goal-card .gd{font-size:13px;color:var(--muted);font-weight:600}
 
   .unit-banner{color:#fff;border-radius:16px;padding:18px 22px;margin:14px 0 28px;display:flex;justify-content:space-between;align-items:center}
   .unit-banner h2{font-size:14px;opacity:.9;font-weight:700}
@@ -54,13 +56,18 @@
   .bar{flex:1;height:16px;background:var(--border);border-radius:10px;overflow:hidden}
   .bar > div{height:100%;background:var(--green);border-radius:10px;transition:width .3s;width:0}
   .mini-heart{color:var(--red);font-weight:800;font-size:18px;display:flex;align-items:center;gap:4px}
-
   .q-type{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
   .q-title{font-size:23px;font-weight:800;margin-bottom:24px}
 
-  .speaker{display:inline-flex;align-items:center;gap:12px;background:var(--blue);color:#fff;padding:16px 22px;border-radius:16px;font-size:30px;box-shadow:0 4px 0 var(--blue-dark);margin-bottom:8px}
+  .audio-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .speaker{display:inline-flex;align-items:center;gap:12px;background:var(--blue);color:#fff;padding:16px 22px;border-radius:16px;font-size:30px;box-shadow:0 4px 0 var(--blue-dark)}
+  .speaker.slow{background:var(--muted);box-shadow:0 4px 0 #888;font-size:22px;padding:16px 18px}
+  .speaker.mic{background:var(--red);box-shadow:0 4px 0 var(--red-dark);font-size:30px}
+  .speaker.mic.live{animation:pulse .8s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
   .phrase{font-size:22px;font-weight:700;margin:14px 0 26px;line-height:1.4}
   .ctx{font-size:15px;color:var(--muted);font-weight:600;margin:-10px 0 20px}
+  .heard{font-size:15px;font-weight:700;margin:16px 0;padding:12px;border-radius:12px;background:var(--bg2)}
 
   .choices{display:grid;gap:12px}
   .choice{border:2px solid var(--border);border-bottom-width:4px;border-radius:14px;padding:16px 18px;font-size:18px;font-weight:600;text-align:left;background:var(--card);transition:transform .05s}
@@ -73,16 +80,13 @@
   .answer-area{min-height:64px;border-bottom:2px solid var(--border);display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;margin-bottom:22px;align-content:flex-start}
   .bank{display:flex;flex-wrap:wrap;gap:10px}
   .tile{border:2px solid var(--border);border-bottom-width:4px;border-radius:12px;padding:10px 16px;font-size:17px;font-weight:600;background:var(--card)}
-  .tile:active{transform:translateY(2px)}
-  .tile.used{visibility:hidden}
-
+  .tile:active{transform:translateY(2px)} .tile.used{visibility:hidden}
   .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .match-grid button{border:2px solid var(--border);border-bottom-width:4px;border-radius:12px;padding:16px;font-size:17px;font-weight:600;background:var(--card)}
   .match-grid button.sel{border-color:var(--blue);background:#ddf4ff;color:var(--blue-dark)}
   .match-grid button.gone{opacity:.25;pointer-events:none;border-color:var(--green)}
   .wrong-flash{border-color:var(--red)!important;background:#ffdfe0!important}
-
-  input.type{width:100%;border:2px solid var(--border);border-radius:14px;padding:14px;font-size:18px;font-family:inherit;outline:none;background:var(--card);color:var(--ink)}
+  input.type{width:100%;border:2px solid var(--border);border-radius:14px;padding:14px;font-size:18px;outline:none;background:var(--card);color:var(--ink)}
   input.type:focus{border-color:var(--blue)}
   .conj-pronoun{font-size:34px;font-weight:800;margin:6px 0 2px;color:var(--purple)}
   .gender-noun{font-size:34px;font-weight:800;margin:6px 0 18px}
@@ -115,28 +119,54 @@
 
   .menu-card{background:var(--card);border:2px solid var(--border);border-bottom-width:4px;border-radius:16px;padding:18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;width:100%;text-align:left}
   .menu-card:active{transform:translateY(2px)}
-  .menu-card .mi{font-size:34px}
-  .menu-card .mt{font-size:18px;font-weight:800}
+  .menu-card .mi{font-size:34px} .menu-card .mt{font-size:18px;font-weight:800}
   .menu-card .md{font-size:13px;color:var(--muted);font-weight:600;margin-top:2px}
   .menu-card .badge{margin-left:auto;background:var(--red);color:#fff;font-weight:800;border-radius:20px;padding:4px 12px;font-size:14px}
 
+  .back-btn{font-weight:800;color:var(--muted);margin:8px 0 16px;font-size:15px}
+  .search{width:100%;border:2px solid var(--border);border-radius:14px;padding:12px 16px;font-size:16px;background:var(--card);color:var(--ink);margin-bottom:14px;outline:none}
+  .search:focus{border-color:var(--blue)}
+  .dict-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+  .dict-row .it{font-weight:800;font-size:17px} .dict-row .en{color:var(--muted);font-weight:600;font-size:14px}
+  .dict-row .pl{margin-left:auto;font-size:22px;opacity:.6}
+
+  .acc{background:var(--card);border:2px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden}
+  .acc h3{padding:16px;font-size:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+  .acc .body{padding:0 16px 16px;font-size:15px;line-height:1.6;color:var(--ink)}
+  .acc .body b{color:var(--green-dark)}
+  .acc .body table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  .acc .body td{border:1px solid var(--border);padding:6px 8px}
+  .acc .body code{background:var(--bg2);padding:2px 6px;border-radius:6px;font-weight:700}
+
+  .conj-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  .conj-table th{background:var(--bg2);padding:8px;font-size:12px;text-transform:uppercase;color:var(--muted)}
+  .conj-table td{border:1px solid var(--border);padding:10px 8px;text-align:center;font-weight:700}
+  .conj-table td:first-child{background:var(--bg2);font-weight:800;color:var(--purple)}
+  .conj-table td.tap:active{background:#ddf4ff}
+
+  .story-line{padding:14px 0;border-bottom:1px solid var(--border)}
+  .story-line .it{font-size:18px;line-height:1.7;font-weight:600}
+  .story-line .it span{padding:1px 2px;border-radius:4px;cursor:pointer}
+  .story-line .it span:active{background:#ddf4ff}
+  .story-line .en{color:var(--muted);font-size:14px;font-weight:600;margin-top:6px;display:none}
+  .story-line.open .en{display:block}
+  .story-line .tr{font-size:12px;font-weight:800;color:var(--blue);margin-top:4px}
+
   nav{position:fixed;bottom:0;width:100%;max-width:640px;display:flex;justify-content:space-around;background:var(--card);border-top:2px solid var(--border);padding:8px 0}
-  nav button{font-size:24px;padding:8px 14px;border-radius:12px;opacity:.5;position:relative}
+  nav button{font-size:23px;padding:8px 10px;border-radius:12px;opacity:.5;position:relative}
   nav button.active{opacity:1;background:#ddf4ff}
   [data-theme="dark"] nav button.active{background:var(--bg2)}
-  nav .ndot{position:absolute;top:2px;right:6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:0 5px}
-
-  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+  nav .ndot{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:0 5px}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;max-width:90%}
   .toast.show{opacity:1}
   .tip{background:#ddf4ff;border-radius:12px;padding:14px 16px;font-size:14px;color:var(--blue-dark);margin-bottom:20px;font-weight:600}
   [data-theme="dark"] .tip{background:var(--bg2);color:var(--blue)}
   .settings-box{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
   .settings-box label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bottom:8px}
-  .settings-box select{width:100%;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--ink);font-size:15px}
+  .settings-box select,.settings-box input{width:100%;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg);color:var(--ink);font-size:15px}
 </style>
 </head>
 <body>
-
 <div id="home">
   <header>
     <div class="stat flame"><span class="ico">🔥</span><span id="streak">0</span></div>
@@ -147,27 +177,27 @@
   </header>
   <main><div id="path"></div></main>
 </div>
-
 <div id="lesson" class="hidden"></div>
-
 <nav id="nav">
   <button data-view="home" class="active">🏠</button>
-  <button data-view="review">🔁</button>
+  <button data-view="learn">📚</button>
   <button data-view="train">🏋️</button>
+  <button data-view="review">🔁</button>
   <button data-view="stats">📊</button>
 </nav>
-
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============================================================
-   IMPARA v3 — Italian trainer (single file)
-   24 thematic units · 5-tense conjugation gym ·
-   spaced-repetition review · dictation · gender/article drill ·
-   hardest-words drill · dark mode · smart voice selection.
+   IMPARA v4 — Italian trainer (single file, no backend)
+   24 units · 5-tense conjugation · spaced repetition ·
+   speaking (speech recognition) · reading stories ·
+   dictionary · grammar reference · conjugation tables ·
+   dictation · gender drill · hardest-words · numbers ·
+   slow audio · daily goals · dark mode · smart voices.
    ============================================================ */
 
-/* ---------- VOCAB UNITS (high-frequency core ≈ A1→B1) ---------- */
+/* ---------- VOCAB UNITS ---------- */
 const CURRICULUM = [
  { unit:"Unit 1", title:"Greetings", guide:"Buongiorno!", color:"var(--green)", lessons:[
    { name:"Ciao!", cards:[["ciao","hi / bye"],["buongiorno","good morning"],["buonasera","good evening"],["buonanotte","good night"],["grazie","thank you"],["prego","you're welcome"],["sì","yes"],["no","no"]],
@@ -315,21 +345,13 @@ const CURRICULUM = [
  ]},
 ];
 
-/* ---------- CONJUGATION GYM (5 tenses, regular generator + irregulars) ---------- */
+/* ---------- CONJUGATION ---------- */
 const PRONOUNS=["io","tu","lui/lei","noi","voi","loro"];
-const TENSES=[
-  {key:"present",name:"Present"},
-  {key:"passato",name:"Passato prossimo"},
-  {key:"imperfetto",name:"Imperfetto"},
-  {key:"futuro",name:"Future"},
-  {key:"condizionale",name:"Conditional"},
-];
+const TENSES=[{key:"present",name:"Present"},{key:"passato",name:"Passato prossimo"},{key:"imperfetto",name:"Imperfetto"},{key:"futuro",name:"Future"},{key:"condizionale",name:"Conditional"}];
 const AUX={ avere:["ho","hai","ha","abbiamo","avete","hanno"], essere:["sono","sei","è","siamo","siete","sono"] };
 const REG_PRES={are:["o","i","a","iamo","ate","ano"],ere:["o","i","e","iamo","ete","ono"],ire:["o","i","e","iamo","ite","ono"],isc:["isco","isci","isce","iamo","ite","iscono"]};
 const REG_IMP={are:["avo","avi","ava","avamo","avate","avano"],ere:["evo","evi","eva","evamo","evate","evano"],ire:["ivo","ivi","iva","ivamo","ivate","ivano"]};
-const FUT_END=["ò","ai","à","emo","ete","anno"];
-const COND_END=["ei","esti","ebbe","emmo","este","ebbero"];
-
+const FUT_END=["ò","ai","à","emo","ete","anno"], COND_END=["ei","esti","ebbe","emmo","este","ebbero"];
 const VERBS=[
   {inf:"parlare",en:"to speak",g:"are",aux:"avere",part:"parlato"},
   {inf:"lavorare",en:"to work",g:"are",aux:"avere",part:"lavorato"},
@@ -337,133 +359,183 @@ const VERBS=[
   {inf:"dormire",en:"to sleep",g:"ire",aux:"avere",part:"dormito"},
   {inf:"capire",en:"to understand",g:"isc",aux:"avere",part:"capito"},
   {inf:"partire",en:"to leave",g:"ire",aux:"essere",part:"partito"},
-  {inf:"essere",en:"to be",g:"ere",aux:"essere",part:"stato",
-    irr:{present:["sono","sei","è","siamo","siete","sono"],imperfetto:["ero","eri","era","eravamo","eravate","erano"],
-         futuro:["sarò","sarai","sarà","saremo","sarete","saranno"],condizionale:["sarei","saresti","sarebbe","saremmo","sareste","sarebbero"]}},
-  {inf:"avere",en:"to have",g:"ere",aux:"avere",part:"avuto",
-    irr:{present:["ho","hai","ha","abbiamo","avete","hanno"],
-         futuro:["avrò","avrai","avrà","avremo","avrete","avranno"],condizionale:["avrei","avresti","avrebbe","avremmo","avreste","avrebbero"]}},
-  {inf:"fare",en:"to do/make",g:"are",aux:"avere",part:"fatto",
-    irr:{present:["faccio","fai","fa","facciamo","fate","fanno"],imperfetto:["facevo","facevi","faceva","facevamo","facevate","facevano"],
-         futuro:["farò","farai","farà","faremo","farete","faranno"],condizionale:["farei","faresti","farebbe","faremmo","fareste","farebbero"]}},
-  {inf:"andare",en:"to go",g:"are",aux:"essere",part:"andato",
-    irr:{present:["vado","vai","va","andiamo","andate","vanno"],
-         futuro:["andrò","andrai","andrà","andremo","andrete","andranno"],condizionale:["andrei","andresti","andrebbe","andremmo","andreste","andrebbero"]}},
-  {inf:"potere",en:"to be able",g:"ere",aux:"avere",part:"potuto",
-    irr:{present:["posso","puoi","può","possiamo","potete","possono"],
-         futuro:["potrò","potrai","potrà","potremo","potrete","potranno"],condizionale:["potrei","potresti","potrebbe","potremmo","potreste","potrebbero"]}},
-  {inf:"volere",en:"to want",g:"ere",aux:"avere",part:"voluto",
-    irr:{present:["voglio","vuoi","vuole","vogliamo","volete","vogliono"],
-         futuro:["vorrò","vorrai","vorrà","vorremo","vorrete","vorranno"],condizionale:["vorrei","vorresti","vorrebbe","vorremmo","vorreste","vorrebbero"]}},
-  {inf:"dovere",en:"to have to",g:"ere",aux:"avere",part:"dovuto",
-    irr:{present:["devo","devi","deve","dobbiamo","dovete","devono"],
-         futuro:["dovrò","dovrai","dovrà","dovremo","dovrete","dovranno"],condizionale:["dovrei","dovresti","dovrebbe","dovremmo","dovreste","dovrebbero"]}},
-  {inf:"venire",en:"to come",g:"ire",aux:"essere",part:"venuto",
-    irr:{present:["vengo","vieni","viene","veniamo","venite","vengono"],
-         futuro:["verrò","verrai","verrà","verremo","verrete","verranno"],condizionale:["verrei","verresti","verrebbe","verremmo","verreste","verrebbero"]}},
+  {inf:"essere",en:"to be",g:"ere",aux:"essere",part:"stato",irr:{present:["sono","sei","è","siamo","siete","sono"],imperfetto:["ero","eri","era","eravamo","eravate","erano"],futuro:["sarò","sarai","sarà","saremo","sarete","saranno"],condizionale:["sarei","saresti","sarebbe","saremmo","sareste","sarebbero"]}},
+  {inf:"avere",en:"to have",g:"ere",aux:"avere",part:"avuto",irr:{present:["ho","hai","ha","abbiamo","avete","hanno"],futuro:["avrò","avrai","avrà","avremo","avrete","avranno"],condizionale:["avrei","avresti","avrebbe","avremmo","avreste","avrebbero"]}},
+  {inf:"fare",en:"to do/make",g:"are",aux:"avere",part:"fatto",irr:{present:["faccio","fai","fa","facciamo","fate","fanno"],imperfetto:["facevo","facevi","faceva","facevamo","facevate","facevano"],futuro:["farò","farai","farà","faremo","farete","faranno"],condizionale:["farei","faresti","farebbe","faremmo","fareste","farebbero"]}},
+  {inf:"andare",en:"to go",g:"are",aux:"essere",part:"andato",irr:{present:["vado","vai","va","andiamo","andate","vanno"],futuro:["andrò","andrai","andrà","andremo","andrete","andranno"],condizionale:["andrei","andresti","andrebbe","andremmo","andreste","andrebbero"]}},
+  {inf:"potere",en:"to be able",g:"ere",aux:"avere",part:"potuto",irr:{present:["posso","puoi","può","possiamo","potete","possono"],futuro:["potrò","potrai","potrà","potremo","potrete","potranno"],condizionale:["potrei","potresti","potrebbe","potremmo","potreste","potrebbero"]}},
+  {inf:"volere",en:"to want",g:"ere",aux:"avere",part:"voluto",irr:{present:["voglio","vuoi","vuole","vogliamo","volete","vogliono"],futuro:["vorrò","vorrai","vorrà","vorremo","vorrete","vorranno"],condizionale:["vorrei","vorresti","vorrebbe","vorremmo","vorreste","vorrebbero"]}},
+  {inf:"dovere",en:"to have to",g:"ere",aux:"avere",part:"dovuto",irr:{present:["devo","devi","deve","dobbiamo","dovete","devono"],futuro:["dovrò","dovrai","dovrà","dovremo","dovrete","dovranno"],condizionale:["dovrei","dovresti","dovrebbe","dovremmo","dovreste","dovrebbero"]}},
+  {inf:"venire",en:"to come",g:"ire",aux:"essere",part:"venuto",irr:{present:["vengo","vieni","viene","veniamo","venite","vengono"],futuro:["verrò","verrai","verrà","verremo","verrete","verranno"],condizionale:["verrei","verresti","verrebbe","verremmo","verreste","verrebbero"]}},
 ];
-function stem(inf){ return inf.slice(0,-3); }
+function vstem(inf){ return inf.slice(0,-3); }
 function futBase(v){ let b=v.inf.slice(0,-1); if(v.g==="are") b=b.slice(0,-2)+"er"; return b; }
 function conjugate(v,tense){
   if(v.irr&&v.irr[tense]) return v.irr[tense];
-  if(tense==="present"){ const e=REG_PRES[v.g]; return e.map(x=>stem(v.inf)+x); }
-  if(tense==="imperfetto"){ const e=REG_IMP[v.g==="isc"?"ire":v.g]; return e.map(x=>stem(v.inf)+x); }
-  if(tense==="futuro"){ const b=futBase(v); return FUT_END.map(x=>b+x); }
-  if(tense==="condizionale"){ const b=futBase(v); return COND_END.map(x=>b+x); }
-  if(tense==="passato"){
-    if(v.aux==="essere"){ const base=v.part.slice(0,-1); const agr=["o","o","o","i","i","i"];
-      return AUX.essere.map((a,i)=>a+" "+base+agr[i]); }
-    return AUX.avere.map(a=>a+" "+v.part);
-  }
+  if(tense==="present") return REG_PRES[v.g].map(x=>vstem(v.inf)+x);
+  if(tense==="imperfetto") return REG_IMP[v.g==="isc"?"ire":v.g].map(x=>vstem(v.inf)+x);
+  if(tense==="futuro") return FUT_END.map(x=>futBase(v)+x);
+  if(tense==="condizionale") return COND_END.map(x=>futBase(v)+x);
+  if(tense==="passato"){ if(v.aux==="essere"){ const b=v.part.slice(0,-1),agr=["o","o","o","i","i","i"]; return AUX.essere.map((a,i)=>a+" "+b+agr[i]); } return AUX.avere.map(a=>a+" "+v.part); }
   return [];
 }
 
+/* ---------- NUMBERS ---------- */
+function itNum(n){
+  const u=["zero","uno","due","tre","quattro","cinque","sei","sette","otto","nove"];
+  const teens=["dieci","undici","dodici","tredici","quattordici","quindici","sedici","diciassette","diciotto","diciannove"];
+  const tens=["","","venti","trenta","quaranta","cinquanta","sessanta","settanta","ottanta","novanta"];
+  if(n>=100) return "cento";
+  if(n<10) return u[n];
+  if(n<20) return teens[n-10];
+  const t=Math.floor(n/10),o=n%10; let base=tens[t];
+  if(o===0) return base;
+  if(o===1||o===8) base=base.slice(0,-1);
+  let ones=u[o]; if(o===3) ones="tré";
+  return base+ones;
+}
+
+/* ---------- READING STORIES ---------- */
+const STORIES=[
+ { title:"Al bar", level:"A1", lines:[
+   ["Buongiorno! Un caffè, per favore.","Good morning! A coffee, please."],
+   ["Certo. Qualcos'altro?","Of course. Anything else?"],
+   ["Sì, anche un cornetto.","Yes, also a croissant."],
+   ["Sono tre euro.","That's three euros."],
+   ["Ecco a Lei. Grazie!","Here you are. Thank you!"],
+ ]},
+ { title:"In albergo", level:"A1", lines:[
+   ["Buonasera, ho una prenotazione.","Good evening, I have a booking."],
+   ["A che nome, prego?","Under what name, please?"],
+   ["Mi chiamo Anna Rossi.","My name is Anna Rossi."],
+   ["Perfetto, camera dodici. Ecco la chiave.","Perfect, room twelve. Here is the key."],
+   ["A che ora è la colazione?","What time is breakfast?"],
+   ["Dalle sette alle dieci.","From seven to ten."],
+ ]},
+ { title:"La famiglia di Luca", level:"A2", lines:[
+   ["Luca ha una famiglia grande.","Luca has a big family."],
+   ["Suo padre è medico e sua madre è insegnante.","His father is a doctor and his mother is a teacher."],
+   ["Ha due sorelle e un fratello.","He has two sisters and a brother."],
+   ["La domenica mangiano sempre insieme.","On Sundays they always eat together."],
+   ["A Luca piace molto cucinare la pasta.","Luca really likes to cook pasta."],
+ ]},
+ { title:"Una giornata", level:"A2", lines:[
+   ["Ogni mattina mi sveglio alle sette.","Every morning I wake up at seven."],
+   ["Faccio colazione e poi vado al lavoro.","I have breakfast and then I go to work."],
+   ["Lavoro in un ufficio in centro.","I work in an office downtown."],
+   ["La sera torno a casa e leggo un libro.","In the evening I return home and read a book."],
+   ["Di solito vado a dormire presto.","I usually go to sleep early."],
+ ]},
+ { title:"Il viaggio a Roma", level:"B1", lines:[
+   ["L'anno scorso sono andato a Roma con un amico.","Last year I went to Rome with a friend."],
+   ["Abbiamo visitato il Colosseo e tanti musei.","We visited the Colosseum and many museums."],
+   ["Il cibo era delizioso, ma faceva molto caldo.","The food was delicious, but it was very hot."],
+   ["Vorrei tornarci il prossimo anno.","I would like to go back next year."],
+   ["Roma è una città che non dimenticherò.","Rome is a city I won't forget."],
+ ]},
+];
+
+/* extra glosses for common words used in stories */
+const GLOSS_EXTRA={ "un":"a/one","una":"a/one","il":"the","la":"the","lo":"the","le":"the","i":"the","gli":"the","l'":"the",
+ "è":"is","ho":"I have","ha":"has","abbiamo":"we have","sono":"am/are","mi":"me/myself","sua":"his/her","suo":"his/her",
+ "che":"that/which","e":"and","poi":"then","con":"with","molto":"very","sempre":"always","tanti":"many","era":"was",
+ "faceva":"it was (weather)","insieme":"together","piace":"likes","centro":"centre","amico":"friend","scorso":"last",
+ "ogni":"every","alle":"at the","dalle":"from the","prego":"please","certo":"of course","ecco":"here is",
+ "qualcos'altro":"anything else","nome":"name","perfetto":"perfect","camera":"room","cibo":"food","ma":"but",
+ "non":"not","ci":"there","a":"to/at","di":"of","in":"in","mangiano":"they eat","vado":"I go","torno":"I return",
+ "leggo":"I read","faccio":"I do/make","sveglio":"wake","lavoro":"I work/work","visitato":"visited","andato":"went",
+ "vorrei":"I'd like","tornarci":"to go back","dimenticherò":"I will forget","giornata":"day" };
+let GLOSS=null;
+function buildGloss(){ GLOSS={...GLOSS_EXTRA}; CURRICULUM.forEach(u=>u.lessons.forEach(l=>l.cards.forEach(c=>{
+  const it=c[0].replace(/^(il|lo|la|i|gli|le|l'|un|uno|una|un')\s*/,"").replace(/[?!.]/g,"").toLowerCase();
+  const en=c[1].replace(/^the\s+/,""); if(it&&!GLOSS[it]) GLOSS[it]=en; }))); }
+function glossOf(w){ if(!GLOSS) buildGloss(); const k=w.toLowerCase().replace(/[.,!?;:"]/g,""); return GLOSS[k]||null; }
+
+/* ---------- GRAMMAR TIPS ---------- */
+const GRAMMAR=[
+ {t:"Nouns & gender",b:"Every Italian noun is <b>masculine</b> or <b>feminine</b>. Rule of thumb: nouns ending in <code>-o</code> are usually masculine (<code>il libro</code>), nouns ending in <code>-a</code> are usually feminine (<code>la casa</code>). Nouns ending in <code>-e</code> can be either — you just learn them (<code>il fiore</code> m, <code>la chiave</code> f)."},
+ {t:"Definite articles (the)",b:"Italian has several words for <b>the</b>:<br>• <code>il</code> — masc. before most consonants (il cane)<br>• <code>lo</code> — masc. before s+consonant, z, gn, ps (lo studente, lo zaino)<br>• <code>l'</code> — before a vowel (l'amico, l'acqua)<br>• <code>la</code> — feminine (la casa)<br>Plurals: <code>i</code>, <code>gli</code>, <code>le</code>."},
+ {t:"Indefinite articles (a/an)",b:"• <code>un</code> — masc. (un cane)<br>• <code>uno</code> — masc. before s+cons, z (uno studente)<br>• <code>una</code> — fem. (una casa)<br>• <code>un'</code> — fem. before a vowel (un'amica)."},
+ {t:"Plurals",b:"Change the final vowel:<br>• <code>-o → -i</code> (libro → libri)<br>• <code>-a → -e</code> (casa → case)<br>• <code>-e → -i</code> (cane → cani, both genders)<br>Articles change too: il→i, lo/l'→gli, la/l'→le."},
+ {t:"Adjective agreement",b:"Adjectives <b>match</b> the noun in gender and number: <code>il ragazzo alt<b>o</b></code>, <code>la ragazza alt<b>a</b></code>, <code>i ragazzi alt<b>i</b></code>, <code>le ragazze alt<b>e</b></code>. Adjectives in <code>-e</code> (grande, importante) only change for number: grande → grandi."},
+ {t:"Present tense",b:"Drop the ending and add new endings.<br><b>-are</b> (parlare): o, i, a, iamo, ate, ano<br><b>-ere</b> (credere): o, i, e, iamo, ete, ono<br><b>-ire</b> (dormire): o, i, e, iamo, ite, ono<br>Many -ire verbs add -isc- (capire → capisco). Use the Conjugation tables tab to see full grids."},
+ {t:"Essere vs avere (to be / to have)",b:"Two essential irregular verbs.<br><b>essere</b>: sono, sei, è, siamo, siete, sono<br><b>avere</b>: ho, hai, ha, abbiamo, avete, hanno<br>Note <code>ho/hai/ha/hanno</code> have a silent H. Use <code>avere</code> for age and hunger: <code>ho fame</code> (I'm hungry), <code>ho 20 anni</code> (I'm 20)."},
+ {t:"Passato prossimo (past)",b:"The everyday past = <b>avere/essere (present) + past participle</b>.<br>Participles: -are→-ato, -ere→-uto, -ire→-ito.<br><code>Ho mangiat<b>o</b></code> (I ate). Verbs of movement/change use <b>essere</b>, and the participle agrees: <code>sono andat<b>o</b></code> (m) / <code>andat<b>a</b></code> (f)."},
+ {t:"Imperfetto (used to / was -ing)",b:"For habits, descriptions and background in the past. Very regular: stem + <br>-are: avo, avi, ava, avamo, avate, avano<br>-ere/-ire: evo/ivo …<br><code>Da bambino <b>andavo</b> al mare</code> (As a child I used to go to the sea). Key irregular: <b>ero</b> (I was)."},
+ {t:"Future & conditional",b:"Same stem, different endings.<br><b>Future</b>: parler<b>ò</b>, parler<b>ai</b>, parler<b>à</b>… (I will speak)<br><b>Conditional</b>: parler<b>ei</b>, parler<b>esti</b>, parler<b>ebbe</b>… (I would speak)<br>Super useful polite forms: <code>vorrei</code> (I'd like), <code>potrei</code> (I could), <code>dovrei</code> (I should)."},
+ {t:"Negation",b:"Just put <code>non</code> before the verb: <code>Non capisco</code> (I don't understand). Double negatives are normal: <code>Non ho <b>niente</b></code> (I have nothing), <code>Non c'è <b>nessuno</b></code> (there's no one)."},
+ {t:"Asking questions",b:"Word order stays the same — intonation (or a <code>?</code>) makes it a question: <code>Parli italiano?</code> Question words: <code>chi</code> (who), <code>cosa/che</code> (what), <code>dove</code> (where), <code>quando</code> (when), <code>perché</code> (why), <code>come</code> (how), <code>quanto</code> (how much)."},
+ {t:"Prepositions + articles",b:"Prepositions merge with the article:<br><code>a + il = al</code>, <code>di + il = del</code>, <code>in + la = nella</code>, <code>su + il = sul</code>.<br>Example: <code>Vado <b>al</b> mare</code> (a+il), <code>il libro è <b>sul</b> tavolo</code> (su+il)."},
+ {t:"Mi piace (I like)",b:"Literally 'it is pleasing to me'. Use <b>piace</b> + singular: <code>Mi piace il caffè</code>. Use <b>piacciono</b> + plural: <code>Mi piacciono i gatti</code>. Change the pronoun for who likes it: ti piace (you), gli piace (he)."},
+];
+
 /* ---------- STATE ---------- */
 const SAVE_KEY="impara_save_v3";
-const defaultState={ xp:0,gems:0,hearts:5,streak:0,lastDay:null,completed:{},srs:{},theme:"light",lastHeart:Date.now(),voiceURI:"" };
+const defaultState={ xp:0,gems:0,hearts:5,streak:0,lastDay:null,completed:{},srs:{},theme:"light",lastHeart:Date.now(),voiceURI:"",dailyGoal:30,todayKey:null,todayXp:0 };
 let S=load();
 function load(){ try{ const r=JSON.parse(localStorage.getItem(SAVE_KEY)); if(r) return {...defaultState,...r};
-  const old=JSON.parse(localStorage.getItem("impara_save_v2")); return old?{...defaultState,...old}:{...defaultState}; }
-  catch(e){ return {...defaultState}; } }
+  const old=JSON.parse(localStorage.getItem("impara_save_v2")); return old?{...defaultState,...old}:{...defaultState}; }catch(e){ return {...defaultState}; } }
 function save(){ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }
-
-function regenHearts(){ if(S.hearts>=5){ S.lastHeart=Date.now(); return; }
-  const g=Math.floor((Date.now()-(S.lastHeart||Date.now()))/120e4); if(g>0){ S.hearts=Math.min(5,S.hearts+g); S.lastHeart=Date.now(); save(); } }
-
+function regenHearts(){ if(S.hearts>=5){ S.lastHeart=Date.now(); return; } const g=Math.floor((Date.now()-(S.lastHeart||Date.now()))/120e4); if(g>0){ S.hearts=Math.min(5,S.hearts+g); S.lastHeart=Date.now(); save(); } }
 function lessonId(u,l){ return u+"-"+l; }
 function isDone(u,l){ return !!S.completed[lessonId(u,l)]; }
 function totalLessons(){ return CURRICULUM.reduce((a,u)=>a+u.lessons.length,0); }
 function doneCount(){ return Object.keys(S.completed).length; }
-function isUnlocked(u,l){ if(u===0&&l===0) return true; if(l>0) return isDone(u,l-1);
-  const p=CURRICULUM[u-1]; return isDone(u-1,p.lessons.length-1); }
-
-/* ---------- SRS ---------- */
+function isUnlocked(u,l){ if(u===0&&l===0) return true; if(l>0) return isDone(u,l-1); const p=CURRICULUM[u-1]; return isDone(u-1,p.lessons.length-1); }
 const SRS_GAPS=[0,4*36e5,24*36e5,3*24*36e5,7*24*36e5,21*24*36e5,60*24*36e5];
-function srsTouch(it,en,correct){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en;
-  e.s=correct?Math.min(6,e.s+1):Math.max(0,e.s-1); e.due=Date.now()+SRS_GAPS[e.s]; S.srs[it]=e; }
+function srsTouch(it,en,correct){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en; e.s=correct?Math.min(6,e.s+1):Math.max(0,e.s-1); e.due=Date.now()+SRS_GAPS[e.s]; S.srs[it]=e; }
 function dueCount(){ const n=Date.now(); return Object.values(S.srs).filter(e=>e.due<=n).length; }
-
-/* ---------- streak ---------- */
 function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
-function bumpStreak(){ const t=todayStr(); if(S.lastDay===t) return;
-  const yd=new Date(Date.now()-864e5); const y=yd.getFullYear()+"-"+yd.getMonth()+"-"+yd.getDate();
-  S.streak=(S.lastDay===y)?S.streak+1:1; S.lastDay=t; }
+function bumpStreak(){ const t=todayStr(); if(S.lastDay===t) return; const yd=new Date(Date.now()-864e5); const y=yd.getFullYear()+"-"+yd.getMonth()+"-"+yd.getDate(); S.streak=(S.lastDay===y)?S.streak+1:1; S.lastDay=t; }
+function addTodayXp(n){ const t=todayStr(); if(S.todayKey!==t){ S.todayKey=t; S.todayXp=0; } S.todayXp+=n; }
+function todayXp(){ return S.todayKey===todayStr()?S.todayXp:0; }
 
-/* ============ THEME ============ */
+/* ---------- THEME / VOICE ---------- */
 function applyTheme(){ document.documentElement.dataset.theme=S.theme; document.getElementById("themeBtn").textContent=S.theme==="dark"?"☀️":"🌙"; }
 document.getElementById("themeBtn").onclick=()=>{ S.theme=S.theme==="dark"?"light":"dark"; save(); applyTheme(); };
-
-/* ============ VOICE ============ */
 let VOICES=[];
 function loadVoices(){ VOICES=(window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>v.lang&&v.lang.toLowerCase().startsWith("it")); }
-function scoreVoice(v){ const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0;
-  if(n.includes("natural")||n.includes("online")) s+=100;
-  if(/(isabella|elsa|diego|giuseppe|fabiola|imelda|palmira)/.test(n)) s+=40;
-  if(n.includes("google")) s+=30; if(n.includes("alice")) s+=10; return s; }
-function pickVoice(){ loadVoices(); if(!VOICES.length) return null;
-  if(S.voiceURI){ const m=VOICES.find(v=>v.voiceURI===S.voiceURI); if(m) return m; }
-  return [...VOICES].sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]; }
-function speak(text){ if(!text||!window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(text);
-  u.lang="it-IT"; u.rate=.9; const v=pickVoice(); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function scoreVoice(v){ const n=(v.name+" "+v.voiceURI).toLowerCase(); let s=0; if(n.includes("natural")||n.includes("online")) s+=100; if(/(isabella|elsa|diego|giuseppe|fabiola|imelda|palmira)/.test(n)) s+=40; if(n.includes("google")) s+=30; if(n.includes("alice")) s+=10; return s; }
+function pickVoice(){ loadVoices(); if(!VOICES.length) return null; if(S.voiceURI){ const m=VOICES.find(v=>v.voiceURI===S.voiceURI); if(m) return m; } return [...VOICES].sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]; }
+function speak(text,rate){ if(!text||!window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(text); u.lang="it-IT"; u.rate=rate||.9; const v=pickVoice(); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function speakSlow(text){ speak(text,.55); }
 
-/* ============ HOME ============ */
+/* ---------- HOME ---------- */
 function renderHome(){
   regenHearts();
   document.getElementById("streak").textContent=S.streak;
   document.getElementById("gems").textContent=S.gems;
   document.getElementById("hearts").textContent=S.hearts;
   const path=document.getElementById("path"); path.innerHTML="";
+  const pct=Math.min(100,Math.round(todayXp()/S.dailyGoal*100));
+  const goal=document.createElement("div"); goal.className="goal-card";
+  goal.innerHTML=`<div class="ring" style="--p:${pct}"><span>${pct>=100?"🏆":"🔥"}</span></div>
+    <div><div class="gt">Daily goal: ${todayXp()} / ${S.dailyGoal} XP</div><div class="gd">${pct>=100?"Completed today — bravo!":"Keep going to hit your goal"}</div></div>`;
+  path.appendChild(goal);
   CURRICULUM.forEach((unit,ui)=>{
     const b=document.createElement("div"); b.className="unit-banner"; b.style.background=unit.color;
-    b.innerHTML=`<div><h2>${unit.unit}</h2><h1>${unit.title}</h1></div><div class="guide">${unit.guide}</div>`;
-    path.appendChild(b);
+    b.innerHTML=`<div><h2>${unit.unit}</h2><h1>${unit.title}</h1></div><div class="guide">${unit.guide}</div>`; path.appendChild(b);
     const wrap=document.createElement("div"); wrap.className="path";
     unit.lessons.forEach((les,li)=>{
       const done=isDone(ui,li),unlocked=isUnlocked(ui,li);
-      const cls=done?"done":(unlocked?"current":"locked");
-      const icon=done?"👑":(unlocked?"⭐":"🔒");
       const node=document.createElement("div"); node.className="node-wrap";
-      node.innerHTML=`<button class="node ${cls}">${icon}</button><div class="node-label">${les.name}</div>`;
+      node.innerHTML=`<button class="node ${done?"done":(unlocked?"current":"locked")}">${done?"👑":(unlocked?"⭐":"🔒")}</button><div class="node-label">${les.name}</div>`;
       node.querySelector("button").onclick=(unlocked||done)?(()=>startLesson(ui,li)):(()=>toast("Finish the previous lesson 🔒"));
       node.style.marginLeft=(li%2?"70px":"-70px"); wrap.appendChild(node);
     });
     path.appendChild(wrap);
   });
   const cb=document.createElement("div"); cb.className="unit-banner"; cb.style.background="var(--purple)";
-  cb.innerHTML=`<div><h2>Grammar Gym</h2><h1>Verb Conjugation 🏛️</h1></div><div class="guide">5 tenses</div>`;
-  path.appendChild(cb);
-  const cw=document.createElement("div"); cw.className="path";
-  const cn=document.createElement("div"); cn.className="node-wrap";
+  cb.innerHTML=`<div><h2>Grammar Gym</h2><h1>Verb Conjugation 🏛️</h1></div><div class="guide">5 tenses</div>`; path.appendChild(cb);
+  const cw=document.createElement("div"); cw.className="path"; const cn=document.createElement("div"); cn.className="node-wrap";
   cn.innerHTML=`<button class="node conj">🔤</button><div class="node-label">Conjugation drill</div>`;
   cn.querySelector("button").onclick=startConjugation; cw.appendChild(cn); path.appendChild(cw);
   refreshBadges();
 }
 
-/* ============ QUESTION BUILDERS ============ */
+/* ---------- QUESTION BUILDERS ---------- */
 function buildQueue(unit,lesson){
-  const les=CURRICULUM[unit].lessons[lesson];
-  const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards));
-  const q=[];
+  const les=CURRICULUM[unit].lessons[lesson]; const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards)); const q=[];
   les.cards.forEach(c=>q.push(makeMC(c,all,"it2en")));
   les.cards.filter((_,i)=>i%2===0).forEach(c=>q.push(makeMC(c,all,"en2it")));
   les.cards.filter((_,i)=>i%2===1).forEach(c=>q.push(makeListen(c,all)));
@@ -474,116 +546,77 @@ function buildQueue(unit,lesson){
 }
 function sample(arr,n,ex){ return shuffle(arr.filter(x=>x[0]!==ex)).slice(0,n); }
 function makeMC(card,all,dir){ const [it,en]=card;
-  if(dir==="it2en"){ const opts=shuffle([en,...sample(all,3,it).map(c=>c[1])]);
-    return {type:"mc",qtype:"Select the meaning",prompt:it,speak:it,options:opts,answer:en,label:"What does this mean?",term:it,termEn:en}; }
-  const opts=shuffle([it,...sample(all,3,it).map(c=>c[0])]);
-  return {type:"mc",qtype:"Select the translation",prompt:en,speak:null,options:opts,answer:it,label:"How do you say this?",term:it,termEn:en}; }
-function makeListen(card,all){ const [it,en]=card; const opts=shuffle([en,...sample(all,3,it).map(c=>c[1])]);
-  return {type:"mc",qtype:"Listening",prompt:"🔊 Tap to listen",speak:it,options:opts,answer:en,label:"What did you hear?",listen:true,term:it,termEn:en}; }
-function makeBank(sent){ const [it,en]=sent; const words=it.split(" ");
-  const extra=["è","la","molto","con","non","un"].filter(w=>!words.includes(w)).slice(0,2);
-  return {type:"bank",qtype:"Build the sentence",prompt:en,speak:it,tiles:shuffle([...words,...extra]),answer:words,label:"Translate this sentence",term:it,termEn:en}; }
-function makeType(sent){ const [it,en]=sent;
-  return {type:"type",qtype:"Write in Italian",prompt:en,speak:it,answer:it,label:"Write this in Italian",term:it,termEn:en}; }
+  if(dir==="it2en"){ const opts=shuffle([en,...sample(all,3,it).map(c=>c[1])]); return {type:"mc",qtype:"Select the meaning",prompt:it,speak:it,options:opts,answer:en,label:"What does this mean?",term:it,termEn:en}; }
+  const opts=shuffle([it,...sample(all,3,it).map(c=>c[0])]); return {type:"mc",qtype:"Select the translation",prompt:en,speak:null,options:opts,answer:it,label:"How do you say this?",term:it,termEn:en}; }
+function makeListen(card,all){ const [it,en]=card; const opts=shuffle([en,...sample(all,3,it).map(c=>c[1])]); return {type:"mc",qtype:"Listening",prompt:"🔊 Tap to listen",speak:it,options:opts,answer:en,label:"What did you hear?",listen:true,term:it,termEn:en}; }
+function makeBank(sent){ const [it,en]=sent; const words=it.split(" "); const extra=["è","la","molto","con","non","un"].filter(w=>!words.includes(w)).slice(0,2); return {type:"bank",qtype:"Build the sentence",prompt:en,speak:it,tiles:shuffle([...words,...extra]),answer:words,label:"Translate this sentence",term:it,termEn:en}; }
+function makeType(sent){ const [it,en]=sent; return {type:"type",qtype:"Write in Italian",prompt:en,speak:it,answer:it,label:"Write this in Italian",term:it,termEn:en}; }
 function makeMatch(cards){ return {type:"match",qtype:"Match the pairs",pairs:cards.map(c=>({it:c[0],en:c[1]})),label:"Tap the matching pairs"}; }
-function makeDictation(sent){ const [it,en]=sent;
-  return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:en,speak:it,answer:it,label:"Listen and type what you hear",term:it,termEn:en}; }
-
-function makeConj(){
-  const v=VERBS[Math.floor(Math.random()*VERBS.length)];
-  const t=TENSES[Math.floor(Math.random()*TENSES.length)];
-  const idx=Math.floor(Math.random()*6);
-  const forms=conjugate(v,t.key); const answer=forms[idx];
-  const wrong=new Set();
-  forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
+function makeDictation(sent){ const [it,en]=sent; return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:en,speak:it,answer:it,label:"Listen and type what you hear",term:it,termEn:en}; }
+function makeSpeak(card){ const [it,en]=card; return {type:"speak",qtype:"Speaking",prompt:it,en,speak:it,answer:it,label:"Say this out loud",term:it,termEn:en}; }
+function makeNumber(){ const n=Math.floor(Math.random()*101); return {type:"type",qtype:"Numbers",prompt:null,dictation:true,hint:"type the number you hear (digits)",speak:itNum(n),answer:String(n),term:"num·"+n,termEn:String(n)}; }
+function makeConj(){ const v=VERBS[Math.floor(Math.random()*VERBS.length)],t=TENSES[Math.floor(Math.random()*TENSES.length)],idx=Math.floor(Math.random()*6);
+  const forms=conjugate(v,t.key),answer=forms[idx]; const wrong=new Set(); forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
   while(wrong.size<3){ const ov=VERBS[Math.floor(Math.random()*VERBS.length)]; const f=conjugate(ov,t.key)[Math.floor(Math.random()*6)]; if(f!==answer) wrong.add(f); }
-  const opts=shuffle([answer,...[...wrong].slice(0,3)]);
-  return {type:"mc",qtype:"Conjugation · "+t.name,prompt:null,conj:{pronoun:PRONOUNS[idx],inf:v.inf,en:v.en,tense:t.name},
-    options:opts,answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PRONOUNS[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
+  return {type:"mc",qtype:"Conjugation · "+t.name,conj:{pronoun:PRONOUNS[idx],inf:v.inf,en:v.en,tense:t.name},options:shuffle([answer,...[...wrong].slice(0,3)]),answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PRONOUNS[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
+function genderItems(){ const out=[]; CURRICULUM.forEach(u=>u.lessons.forEach(l=>l.cards.forEach(c=>{ const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }))); return out; }
+function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",gender:{noun:item.noun,en:item.en},options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
 
-/* gender / article */
-function genderItems(){ const out=[]; CURRICULUM.forEach(u=>u.lessons.forEach(l=>l.cards.forEach(c=>{
-  const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }))); return out; }
-function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",prompt:null,gender:{noun:item.noun,en:item.en},
-  options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
-
-/* ============ SESSION FLOW ============ */
+/* ---------- SESSION ---------- */
 let L=null;
-function startLesson(u,l){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
-  L={unit:u,lesson:l,queue:buildQueue(u,l),i:0,correct:0,mistakes:0,wrongQ:[],mode:"lesson"}; show("lesson"); renderQuestion(); }
-function startConjugation(){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
-  const q=[]; for(let k=0;k<15;k++) q.push(makeConj()); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
-function startPractice(){ regenHearts(); const done=Object.keys(S.completed);
-  const pool=done.length?done.map(k=>k.split("-").map(Number)):[[0,0]];
-  let q=[]; pool.forEach(([u,l])=>q.push(...buildQueue(u,l))); q=shuffle(q).slice(0,12);
-  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"practice"}; show("lesson"); renderQuestion(); }
-function startReview(){ const n=Date.now();
-  let due=Object.entries(S.srs).filter(([it,e])=>e.due<=n).map(([it,e])=>[it,e.en]);
-  if(!due.length){ toast("Nothing due! Come back later 🔁"); return; }
-  due=shuffle(due).slice(0,15); const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards));
-  const q=due.map(c=>Math.random()<.5?makeMC(c,all,"it2en"):makeMC(c,all,"en2it"));
-  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"review"}; show("lesson"); renderQuestion(); }
-function startDictation(){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
-  const sents=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.sentences));
-  const q=shuffle(sents).slice(0,10).map(makeDictation); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"dictation"}; show("lesson"); renderQuestion(); }
-function startGender(){ regenHearts(); if(S.hearts<=0){ toast("No hearts! Review to keep going ❤️"); return; }
-  const q=shuffle(genderItems()).slice(0,15).map(makeGender); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"gender"}; show("lesson"); renderQuestion(); }
-function startHardest(){ const entries=Object.entries(S.srs);
-  if(entries.length<4){ toast("Learn a few lessons first 🧠"); return; }
-  const sorted=entries.sort((a,b)=>(a[1].s-b[1].s)||(a[1].due-b[1].due)).slice(0,15).map(([it,e])=>[it,e.en]);
-  const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards));
-  const q=sorted.map(c=>Math.random()<.5?makeMC(c,all,"en2it"):makeMC(c,all,"it2en"));
-  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"hardest"}; show("lesson"); renderQuestion(); }
+const HEART_MODES=["lesson","conj","dictation","gender"];
+function noHearts(){ return S.hearts<=0; }
+function startLesson(u,l){ regenHearts(); if(noHearts()){ toast("No hearts! Review to keep going ❤️"); return; } L={unit:u,lesson:l,queue:buildQueue(u,l),i:0,correct:0,mistakes:0,wrongQ:[],mode:"lesson"}; show("lesson"); renderQuestion(); }
+function startConjugation(){ regenHearts(); if(noHearts()){ toast("No hearts! Review to keep going ❤️"); return; } const q=[]; for(let k=0;k<15;k++) q.push(makeConj()); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
+function startPractice(){ regenHearts(); const done=Object.keys(S.completed); const pool=done.length?done.map(k=>k.split("-").map(Number)):[[0,0]]; let q=[]; pool.forEach(([u,l])=>q.push(...buildQueue(u,l))); q=shuffle(q).slice(0,12); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"practice"}; show("lesson"); renderQuestion(); }
+function startReview(){ const n=Date.now(); let due=Object.entries(S.srs).filter(([it,e])=>e.due<=n&&!it.startsWith("num·")).map(([it,e])=>[it,e.en]); if(!due.length){ toast("Nothing due! Come back later 🔁"); return; } due=shuffle(due).slice(0,15); const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards)); const q=due.map(c=>Math.random()<.5?makeMC(c,all,"it2en"):makeMC(c,all,"en2it")); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"review"}; show("lesson"); renderQuestion(); }
+function startDictation(){ regenHearts(); if(noHearts()){ toast("No hearts! Review to keep going ❤️"); return; } const s=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.sentences)); const q=shuffle(s).slice(0,10).map(makeDictation); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"dictation"}; show("lesson"); renderQuestion(); }
+function startGender(){ regenHearts(); if(noHearts()){ toast("No hearts! Review to keep going ❤️"); return; } const q=shuffle(genderItems()).slice(0,15).map(makeGender); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"gender"}; show("lesson"); renderQuestion(); }
+function startHardest(){ const e=Object.entries(S.srs).filter(([it])=>!it.startsWith("num·")); if(e.length<4){ toast("Learn a few lessons first 🧠"); return; } const sorted=e.sort((a,b)=>(a[1].s-b[1].s)||(a[1].due-b[1].due)).slice(0,15).map(([it,x])=>[it,x.en]); const all=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>l.cards)); const q=sorted.map(c=>Math.random()<.5?makeMC(c,all,"en2it"):makeMC(c,all,"it2en")); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"hardest"}; show("lesson"); renderQuestion(); }
+function startSpeaking(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; const cards=CURRICULUM.flatMap(u=>u.lessons.flatMap(l=>[...l.cards,...l.sentences])); const q=shuffle(cards).slice(0,10).map(makeSpeak); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"speaking",srOK:!!SR}; show("lesson"); renderQuestion(); }
+function startNumbers(){ regenHearts(); const q=[]; for(let k=0;k<12;k++) q.push(makeNumber()); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"numbers"}; show("lesson"); renderQuestion(); }
 
-function show(view){ document.getElementById("home").classList.toggle("hidden",view!=="home");
-  document.getElementById("lesson").classList.toggle("hidden",view!=="lesson");
-  document.getElementById("nav").classList.toggle("hidden",view==="lesson"); }
+function show(view){ document.getElementById("home").classList.toggle("hidden",view!=="home"); document.getElementById("lesson").classList.toggle("hidden",view!=="lesson"); document.getElementById("nav").classList.toggle("hidden",view==="lesson"); }
 
 function renderQuestion(){
-  const el=document.getElementById("lesson"); const q=L.queue[L.i]; const pct=Math.round((L.i/L.queue.length)*100);
-  el.innerHTML=`<div class="progress-row"><button class="close" id="closeBtn">✕</button>
-      <div class="bar"><div style="width:${pct}%"></div></div><div class="mini-heart">❤️ ${S.hearts}</div></div>
-    <div class="q-type">${q.qtype}</div><div class="q-title">${q.label}</div>
-    <div id="qbody"></div><div class="foot" id="foot"><button class="btn" id="checkBtn" disabled>Check</button></div>`;
+  const el=document.getElementById("lesson"),q=L.queue[L.i],pct=Math.round((L.i/L.queue.length)*100);
+  const heart=HEART_MODES.includes(L.mode)?`<div class="mini-heart">❤️ ${S.hearts}</div>`:`<div class="mini-heart" style="color:var(--muted)">${L.i+1}/${L.queue.length}</div>`;
+  el.innerHTML=`<div class="progress-row"><button class="close" id="closeBtn">✕</button><div class="bar"><div style="width:${pct}%"></div></div>${heart}</div>
+    <div class="q-type">${q.qtype}</div><div class="q-title">${q.label}</div><div id="qbody"></div>
+    <div class="foot" id="foot"><button class="btn" id="checkBtn" disabled>Check</button></div>`;
   document.getElementById("closeBtn").onclick=()=>{ if(confirm("Quit? This session's progress is lost.")) goHome(); };
   const body=document.getElementById("qbody");
   if(q.type==="mc") renderMC(q,body);
   else if(q.type==="bank") renderBank(q,body);
   else if(q.type==="type") renderType(q,body);
   else if(q.type==="match") renderMatch(q,body);
+  else if(q.type==="speak") renderSpeak(q,body);
 }
+function audioControls(q,withSlow){ return `<div class="audio-row"><button class="speaker" id="spk">🔊</button>${withSlow?`<button class="speaker slow" id="slow">🐢</button>`:""}</div>`; }
+function wireAudio(q){ const s=document.getElementById("spk"); if(s) s.onclick=()=>speak(q.speak); const sl=document.getElementById("slow"); if(sl) sl.onclick=()=>speakSlow(q.speak); }
+
 function renderMC(q,body){
   let sel=null,head="";
-  if(q.conj){ head=`<div class="ctx">${q.conj.inf} — ${q.conj.en} · <b>${q.conj.tense}</b></div><div class="conj-pronoun">${q.conj.pronoun} ___</div>`; }
-  else if(q.gender){ head=`<div class="ctx">${q.gender.en}</div><div class="gender-noun">___ ${q.gender.noun}</div>`; }
-  else { const sp=q.speak?`<div class="speaker" id="spk">🔊</div>`:""; const ph=q.listen?"":`<div class="phrase">${q.prompt}</div>`; head=sp+ph; }
+  if(q.conj) head=`<div class="ctx">${q.conj.inf} — ${q.conj.en} · <b>${q.conj.tense}</b></div><div class="conj-pronoun">${q.conj.pronoun} ___</div>`;
+  else if(q.gender) head=`<div class="ctx">${q.gender.en}</div><div class="gender-noun">___ ${q.gender.noun}</div>`;
+  else head=(q.speak?audioControls(q,q.listen):"")+(q.listen?"":`<div class="phrase">${q.prompt}</div>`);
   body.innerHTML=`${head}<div class="choices"></div>`;
-  if(q.speak&&!q.conj&&!q.gender&&document.getElementById("spk")){ document.getElementById("spk").onclick=()=>speak(q.speak); if(q.listen) speak(q.speak); }
+  if(q.speak&&!q.conj&&!q.gender){ wireAudio(q); if(q.listen) speak(q.speak); }
   const wrap=body.querySelector(".choices");
-  q.options.forEach((opt,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="num">${i+1}</span>${opt}`;
-    b.onclick=()=>{ sel=opt; [...wrap.children].forEach(c=>c.classList.remove("sel")); b.classList.add("sel"); enableCheck(); }; wrap.appendChild(b); });
-  setCheck(()=>{ const right=sel===q.answer;
-    [...wrap.children].forEach(c=>{ const t=c.textContent.replace(/^\d/,"").trim();
-      if(t===q.answer) c.classList.add("right"); else if(t===sel) c.classList.add("wrong"); c.style.pointerEvents="none"; });
-    return {right,correct:q.gender?(q.answer+" "+q.gender.noun):q.answer}; },()=>sel!==null);
+  q.options.forEach((opt,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="num">${i+1}</span>${opt}`; b.onclick=()=>{ sel=opt; [...wrap.children].forEach(c=>c.classList.remove("sel")); b.classList.add("sel"); enableCheck(); }; wrap.appendChild(b); });
+  setCheck(()=>{ const right=sel===q.answer; [...wrap.children].forEach(c=>{ const t=c.textContent.replace(/^\d/,"").trim(); if(t===q.answer) c.classList.add("right"); else if(t===sel) c.classList.add("wrong"); c.style.pointerEvents="none"; }); return {right,correct:q.gender?(q.answer+" "+q.gender.noun):q.answer}; },()=>sel!==null);
 }
 function renderBank(q,body){
-  body.innerHTML=`<div class="speaker" id="spk">🔊</div><div class="phrase">${q.prompt}</div><div class="answer-area" id="ans"></div><div class="bank" id="bank"></div>`;
-  document.getElementById("spk").onclick=()=>speak(q.speak);
+  body.innerHTML=`${audioControls(q,true)}<div class="phrase">${q.prompt}</div><div class="answer-area" id="ans"></div><div class="bank" id="bank"></div>`; wireAudio(q);
   const ans=document.getElementById("ans"),bank=document.getElementById("bank");
-  q.tiles.forEach(w=>{ const t=document.createElement("button"); t.className="tile"; t.textContent=w;
-    t.onclick=()=>{ t.classList.add("used"); const a=document.createElement("button"); a.className="tile"; a.textContent=w;
-      a.onclick=()=>{ a.remove(); t.classList.remove("used"); enableCheck(); }; ans.appendChild(a); enableCheck(); }; bank.appendChild(t); });
+  q.tiles.forEach(w=>{ const t=document.createElement("button"); t.className="tile"; t.textContent=w; t.onclick=()=>{ t.classList.add("used"); const a=document.createElement("button"); a.className="tile"; a.textContent=w; a.onclick=()=>{ a.remove(); t.classList.remove("used"); enableCheck(); }; ans.appendChild(a); enableCheck(); }; bank.appendChild(t); });
   setCheck(()=>{ const got=[...ans.children].map(c=>c.textContent); return {right:got.join(" ")===q.answer.join(" "),correct:q.answer.join(" ")}; },()=>ans.children.length>0);
 }
 function renderType(q,body){
-  const head=q.dictation?`<div class="speaker" id="spk">🔊</div><div class="ctx">hint: ${q.hint}</div>`:`<div class="speaker" id="spk">🔊</div><div class="phrase">${q.prompt}</div>`;
-  body.innerHTML=`${head}<div class="tip">Accents & capitals optional (caffe = caffè).</div><input class="type" id="typed" placeholder="Type in Italian…" autocomplete="off" autocapitalize="off"/>`;
-  document.getElementById("spk").onclick=()=>speak(q.speak); if(q.dictation) speak(q.speak);
-  const inp=document.getElementById("typed");
-  inp.oninput=()=>{ inp.value.trim()?enableCheck():disableCheck(); };
-  inp.onkeydown=e=>{ if(e.key==="Enter"&&!document.getElementById("checkBtn").disabled) doCheck(); };
-  inp.focus();
+  const head=q.dictation?`${audioControls(q,true)}<div class="ctx">${q.hint}</div>`:`${audioControls(q,true)}<div class="phrase">${q.prompt}</div>`;
+  body.innerHTML=`${head}<div class="tip">Accents &amp; capitals optional (caffe = caffè).</div><input class="type" id="typed" placeholder="Type here…" autocomplete="off" autocapitalize="off"/>`;
+  wireAudio(q); if(q.dictation) speak(q.speak);
+  const inp=document.getElementById("typed"); inp.oninput=()=>{ inp.value.trim()?enableCheck():disableCheck(); }; inp.onkeydown=e=>{ if(e.key==="Enter"&&!document.getElementById("checkBtn").disabled) doCheck(); }; inp.focus();
   const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[.,!?;']/g,"").replace(/\s+/g," ").trim();
   setCheck(()=>({right:norm(inp.value)===norm(q.answer),correct:q.answer}),()=>inp.value.trim().length>0);
 }
@@ -593,93 +626,147 @@ function renderMatch(q,body){
   const make=(t,s)=>{ const b=document.createElement("button"); b.textContent=t; b.dataset.side=s; b.dataset.text=t; return b; };
   const items=[]; for(let i=0;i<q.pairs.length;i++){ items.push(make(left[i],"it")); items.push(make(right[i],"en")); }
   let selBtn=null,solved=0;
-  items.forEach(b=>{ b.onclick=()=>{
-    if(b.dataset.side==="it") speak(b.dataset.text);
+  items.forEach(b=>{ b.onclick=()=>{ if(b.dataset.side==="it") speak(b.dataset.text);
     if(selBtn===b){ b.classList.remove("sel"); selBtn=null; return; }
     if(!selBtn){ selBtn=b; b.classList.add("sel"); return; }
     if(selBtn.dataset.side===b.dataset.side){ selBtn.classList.remove("sel"); selBtn=b; b.classList.add("sel"); return; }
-    const itTxt=selBtn.dataset.side==="it"?selBtn.dataset.text:b.dataset.text, enTxt=selBtn.dataset.side==="en"?selBtn.dataset.text:b.dataset.text;
+    const itTxt=selBtn.dataset.side==="it"?selBtn.dataset.text:b.dataset.text,enTxt=selBtn.dataset.side==="en"?selBtn.dataset.text:b.dataset.text;
     if(q.pairs.some(p=>p.it===itTxt&&p.en===enTxt)){ selBtn.classList.add("gone"); b.classList.add("gone"); selBtn.classList.remove("sel"); selBtn=null; solved++; if(solved===q.pairs.length) enableCheck(); }
     else { const a=selBtn; a.classList.add("wrong-flash"); b.classList.add("wrong-flash"); setTimeout(()=>{a.classList.remove("sel","wrong-flash"); b.classList.remove("wrong-flash");},400); selBtn=null; toast("Not a match"); }
   }; mg.appendChild(b); });
   setCheck(()=>({right:true,correct:""}),()=>solved===q.pairs.length);
 }
+function renderSpeak(q,body){
+  body.innerHTML=`${audioControls(q,true)}<div class="phrase">${q.prompt}</div><div class="ctx">${q.en}</div>
+    <div style="text-align:center;margin:10px 0"><button class="speaker mic" id="mic" style="font-size:34px;padding:22px 28px">🎤</button>
+    <div class="gd" style="color:var(--muted);font-weight:700;margin-top:10px" id="micHint">${L.srOK?"Tap the mic and say it":"Speech input not supported here — tap below when you've said it"}</div></div>
+    <div class="heard" id="heard" style="display:none"></div>`;
+  wireAudio(q); speak(q.speak);
+  const foot=document.getElementById("foot");
+  if(!L.srOK){ foot.innerHTML=`<button class="btn" id="saidBtn">I said it ✓</button><button class="btn skip" id="skipBtn" style="margin-top:10px">Skip</button>`;
+    document.getElementById("saidBtn").onclick=()=>evalSpeak(true,q,"(self-checked)"); document.getElementById("skipBtn").onclick=()=>evalSpeak(false,q,"(skipped)"); }
+  else { foot.innerHTML=`<button class="btn skip" id="skipBtn">Skip</button>`; document.getElementById("skipBtn").onclick=()=>evalSpeak(false,q,"(skipped)"); }
+  const mic=document.getElementById("mic");
+  mic.onclick=()=>{ if(!L.srOK){ speak(q.speak); return; } const SR=window.SpeechRecognition||window.webkitSpeechRecognition; const rec=new SR(); rec.lang="it-IT"; rec.maxAlternatives=3; mic.classList.add("live"); document.getElementById("micHint").textContent="Listening…";
+    rec.onresult=e=>{ const alts=[...e.results[0]].map(r=>r.transcript); const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[.,!?;']/g,"").trim(); const target=norm(q.answer); const tWords=target.split(/\s+/); let best=0,heard=alts[0]; alts.forEach(a=>{ const aw=norm(a).split(/\s+/); const matched=tWords.filter(w=>aw.includes(w)).length; const score=matched/tWords.length; if(score>best){best=score;heard=a;} if(norm(a)===target) best=1; }); mic.classList.remove("live"); const ok=best>=0.6; const h=document.getElementById("heard"); h.style.display="block"; h.innerHTML=`You said: <b>${heard}</b>`; evalSpeak(ok,q,"Heard: "+heard); };
+    rec.onerror=()=>{ mic.classList.remove("live"); document.getElementById("micHint").textContent="Didn't catch that — tap to retry"; };
+    rec.onend=()=>{ mic.classList.remove("live"); }; try{ rec.start(); }catch(e){} };
+}
+function evalSpeak(right,q,note){ if(right) L.correct++; else { L.mistakes++; L.wrongQ.push(q); } if(q.term) srsTouch(q.term,q.termEn||"",right); save();
+  const foot=document.getElementById("foot"); foot.className="foot show-result "+(right?"correct":"incorrect");
+  foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Ben detto!":"❌ Target:"}${right?"":`<span class="sub">${q.answer}</span>`}</div><button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
+  document.getElementById("contBtn").onclick=next; }
 
 let _checkFn=null,_canCheck=null;
-function setCheck(fn,can){ _checkFn=fn; _canCheck=can; document.getElementById("checkBtn").onclick=doCheck; }
-function enableCheck(){ if(_canCheck&&_canCheck()) document.getElementById("checkBtn").disabled=false; }
-function disableCheck(){ document.getElementById("checkBtn").disabled=true; }
-function doCheck(){ const {right,correct}=_checkFn(); const q=L.queue[L.i];
-  if(right) L.correct++; else { L.mistakes++; if(S.hearts===5)S.lastHeart=Date.now(); S.hearts=Math.max(0,S.hearts-1); L.wrongQ.push(q); }
-  if(q.term) srsTouch(q.term,q.termEn||"",right);
-  if(right&&q.speak) speak(q.speak);
-  showResult(right,correct); save(); }
-function showResult(right,correct){ const foot=document.getElementById("foot");
-  foot.className="foot show-result "+(right?"correct":"incorrect");
-  foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Bravo!":"❌ Correct answer:"}${right?"":`<span class="sub">${correct}</span>`}</div>
-    <button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
+function setCheck(fn,can){ _checkFn=fn; _canCheck=can; const cb=document.getElementById("checkBtn"); if(cb) cb.onclick=doCheck; }
+function enableCheck(){ if(_canCheck&&_canCheck()){ const b=document.getElementById("checkBtn"); if(b) b.disabled=false; } }
+function disableCheck(){ const b=document.getElementById("checkBtn"); if(b) b.disabled=true; }
+function doCheck(){ const {right,correct}=_checkFn(),q=L.queue[L.i];
+  if(right) L.correct++; else { L.mistakes++; if(HEART_MODES.includes(L.mode)){ if(S.hearts===5)S.lastHeart=Date.now(); S.hearts=Math.max(0,S.hearts-1); } L.wrongQ.push(q); }
+  if(q.term) srsTouch(q.term,q.termEn||"",right); if(right&&q.speak) speak(q.speak); showResult(right,correct); save(); }
+function showResult(right,correct){ const foot=document.getElementById("foot"); foot.className="foot show-result "+(right?"correct":"incorrect");
+  foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Bravo!":"❌ Correct answer:"}${right?"":`<span class="sub">${correct}</span>`}</div><button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
   document.getElementById("contBtn").onclick=next; }
-const HEART_MODES=["lesson","conj","dictation","gender"];
-function next(){ L.i++;
-  if(S.hearts<=0&&HEART_MODES.includes(L.mode)) return failScreen();
-  if(L.i>=L.queue.length){ if(L.wrongQ.length){ L.queue.push(...L.wrongQ); L.wrongQ=[]; renderQuestion(); return; } return completeSession(); }
-  renderQuestion(); }
+function next(){ L.i++; if(noHearts()&&HEART_MODES.includes(L.mode)) return failScreen();
+  if(L.i>=L.queue.length){ if(L.wrongQ.length){ L.queue.push(...L.wrongQ); L.wrongQ=[]; renderQuestion(); return; } return completeSession(); } renderQuestion(); }
 
 function completeSession(){
-  const acc=Math.round((L.correct/(L.correct+L.mistakes||1))*100); bumpStreak(); let html;
-  if(L.mode==="conj"){ S.xp+=20; S.gems+=10;
-    html=`<div class="big">🏛️</div><h1 style="color:var(--purple)">Conjugation mastered!</h1>
-      <div class="reward-row"><div class="reward purple"><div class="lbl">XP</div><div class="val">+20</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
-  } else if(L.mode==="practice"){ S.gems+=5; S.hearts=Math.min(5,S.hearts+2);
-    html=`<div class="big">🏋️</div><h1 style="color:var(--blue)">Practice complete!</h1>
-      <div class="reward-row"><div class="reward blue"><div class="lbl">GEMS</div><div class="val">+5</div></div><div class="reward"><div class="lbl">HEARTS</div><div class="val">+2</div></div></div>`;
-  } else if(L.mode==="review"||L.mode==="hardest"){ S.xp+=15; S.gems+=8;
-    html=`<div class="big">${L.mode==="hardest"?"🧠":"🔁"}</div><h1 style="color:var(--green)">${L.mode==="hardest"?"Tough words tackled!":"Review done!"}</h1>
-      <p>Your weakest words just got stronger. They'll resurface right before you'd forget them.</p>
-      <div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+15</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
-  } else if(L.mode==="dictation"||L.mode==="gender"){ S.xp+=15; S.gems+=6;
-    html=`<div class="big">${L.mode==="dictation"?"🎧":"⚖️"}</div><h1 style="color:var(--blue)">${L.mode==="dictation"?"Dictation done!":"Articles drilled!"}</h1>
-      <div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+15</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
-  } else { const xp=15+(L.mistakes===0?5:0); S.xp+=xp; S.gems+=10; S.completed[lessonId(L.unit,L.lesson)]=true; if(S.hearts<5)S.hearts=Math.min(5,S.hearts+1);
-    html=`<div class="big">🎉</div><h1>Lezione completata!</h1>
-      <div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${xp}</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
-  }
-  save();
-  document.getElementById("lesson").innerHTML=`<div class="center-screen">${html}<button class="btn" style="max-width:280px" id="doneBtn">Continue</button></div>`;
+  const acc=Math.round((L.correct/(L.correct+L.mistakes||1))*100); bumpStreak(); let html,gained=0;
+  if(L.mode==="conj"){ gained=20; S.gems+=10; html=`<div class="big">🏛️</div><h1 style="color:var(--purple)">Conjugation mastered!</h1><div class="reward-row"><div class="reward purple"><div class="lbl">XP</div><div class="val">+20</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`; }
+  else if(L.mode==="practice"){ S.gems+=5; S.hearts=Math.min(5,S.hearts+2); html=`<div class="big">🏋️</div><h1 style="color:var(--blue)">Practice complete!</h1><div class="reward-row"><div class="reward blue"><div class="lbl">GEMS</div><div class="val">+5</div></div><div class="reward"><div class="lbl">HEARTS</div><div class="val">+2</div></div></div>`; }
+  else if(L.mode==="review"||L.mode==="hardest"){ gained=15; S.gems+=8; html=`<div class="big">${L.mode==="hardest"?"🧠":"🔁"}</div><h1 style="color:var(--green)">${L.mode==="hardest"?"Tough words tackled!":"Review done!"}</h1><p>Your weakest words just got stronger — they'll resurface right before you'd forget them.</p><div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+15</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`; }
+  else if(L.mode==="dictation"||L.mode==="gender"||L.mode==="numbers"){ gained=L.mode==="numbers"?10:15; S.gems+=6; const ico=L.mode==="dictation"?"🎧":(L.mode==="numbers"?"🔢":"⚖️"); const ti=L.mode==="dictation"?"Dictation done!":(L.mode==="numbers"?"Numbers nailed!":"Articles drilled!"); html=`<div class="big">${ico}</div><h1 style="color:var(--blue)">${ti}</h1><div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${gained}</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`; }
+  else if(L.mode==="speaking"){ gained=15; S.gems+=8; html=`<div class="big">🗣️</div><h1 style="color:var(--red)">Speaking practice done!</h1><p>Speaking out loud builds the muscle memory apps usually skip. Bravissimo!</p><div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+15</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`; }
+  else { gained=15+(L.mistakes===0?5:0); S.gems+=10; S.completed[lessonId(L.unit,L.lesson)]=true; if(S.hearts<5)S.hearts=Math.min(5,S.hearts+1); html=`<div class="big">🎉</div><h1>Lezione completata!</h1><div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${gained}</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`; }
+  if(gained){ S.xp+=gained; addTodayXp(gained); } save();
+  const goalHit=todayXp()>=S.dailyGoal&&todayXp()-gained<S.dailyGoal;
+  document.getElementById("lesson").innerHTML=`<div class="center-screen">${html}${goalHit?'<p style="color:var(--gold);font-weight:800">🏆 Daily goal reached!</p>':''}<button class="btn" style="max-width:280px" id="doneBtn">Continue</button></div>`;
   document.getElementById("doneBtn").onclick=goHome;
 }
-function failScreen(){ document.getElementById("lesson").innerHTML=`<div class="center-screen"><div class="big">💔</div>
-    <h1 style="color:var(--red)">Out of hearts</h1><p>Mistakes are how we learn. Hearts refill +1 every 20 min, or do a Review to keep going right now.</p>
-    <button class="btn blue" style="max-width:280px" id="rvBtn">Do a Review 🔁</button><button class="btn skip" style="max-width:280px" id="backBtn">Back home</button></div>`;
-  document.getElementById("rvBtn").onclick=()=>{ goHome(); startReview(); };
-  document.getElementById("backBtn").onclick=goHome; }
+function failScreen(){ document.getElementById("lesson").innerHTML=`<div class="center-screen"><div class="big">💔</div><h1 style="color:var(--red)">Out of hearts</h1><p>Mistakes are how we learn. Hearts refill +1 every 20 min, or do a Review to keep going right now.</p><button class="btn blue" style="max-width:280px" id="rvBtn">Do a Review 🔁</button><button class="btn skip" style="max-width:280px" id="backBtn">Back home</button></div>`; document.getElementById("rvBtn").onclick=()=>{ goHome(); startReview(); }; document.getElementById("backBtn").onclick=goHome; }
 function goHome(){ show("home"); document.querySelector("#home main").innerHTML='<div id="path"></div>'; renderHome(); setNav("home"); }
 
-/* ============ TRAIN MENU ============ */
-function showTrain(){ show("home"); regenHearts();
-  const due=dueCount();
+/* ---------- TRAIN MENU ---------- */
+function showTrain(){ show("home"); regenHearts(); const due=dueCount();
   document.querySelector("#home main").innerHTML=`
     <div class="unit-banner" style="background:var(--blue)"><div><h2>Sharpen your skills</h2><h1>Allenamento 🏋️</h1></div></div>
     <button class="menu-card" id="m-prac"><span class="mi">🎯</span><span><span class="mt">Quick Practice</span><span class="md">Mixed review of finished lessons · +2 hearts</span></span></button>
+    <button class="menu-card" id="m-speak"><span class="mi">🗣️</span><span><span class="mt">Speaking Practice</span><span class="md">Say it out loud — checks your pronunciation</span></span></button>
     <button class="menu-card" id="m-conj"><span class="mi">🏛️</span><span><span class="mt">Conjugation Gym</span><span class="md">14 verbs across 5 tenses</span></span></button>
     <button class="menu-card" id="m-dict"><span class="mi">🎧</span><span><span class="mt">Dictation</span><span class="md">Hear Italian, type what you hear</span></span></button>
-    <button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Master noun gender & articles</span></span></button>
+    <button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Master noun gender &amp; articles</span></span></button>
+    <button class="menu-card" id="m-num"><span class="mi">🔢</span><span><span class="mt">Numbers</span><span class="md">Listen and type numbers 0–100</span></span></button>
     <button class="menu-card" id="m-hard"><span class="mi">🧠</span><span><span class="mt">Hardest Words</span><span class="md">Targets your weakest vocabulary</span></span></button>
     <button class="menu-card" id="m-rev"><span class="mi">🔁</span><span><span class="mt">Spaced Review</span><span class="md">Words due for revision</span></span>${due?`<span class="badge">${due}</span>`:""}</button>`;
-  document.getElementById("m-prac").onclick=startPractice;
-  document.getElementById("m-conj").onclick=startConjugation;
-  document.getElementById("m-dict").onclick=startDictation;
-  document.getElementById("m-gen").onclick=startGender;
-  document.getElementById("m-hard").onclick=startHardest;
-  document.getElementById("m-rev").onclick=startReview;
+  const map={ "m-prac":startPractice,"m-speak":startSpeaking,"m-conj":startConjugation,"m-dict":startDictation,"m-gen":startGender,"m-num":startNumbers,"m-hard":startHardest,"m-rev":startReview };
+  Object.entries(map).forEach(([id,fn])=>document.getElementById(id).onclick=fn);
 }
 
-/* ============ STATS ============ */
+/* ---------- LEARN MENU + REFERENCE ---------- */
+function showLearn(){ show("home");
+  document.querySelector("#home main").innerHTML=`
+    <div class="unit-banner" style="background:var(--green)"><div><h2>Reference &amp; reading</h2><h1>Studio 📚</h1></div></div>
+    <button class="menu-card" id="l-story"><span class="mi">📖</span><span><span class="mt">Stories</span><span class="md">Short Italian readings · tap any word</span></span></button>
+    <button class="menu-card" id="l-dict"><span class="mi">📒</span><span><span class="mt">Dictionary</span><span class="md">Search every word · tap to hear</span></span></button>
+    <button class="menu-card" id="l-gram"><span class="mi">📐</span><span><span class="mt">Grammar Notes</span><span class="md">${GRAMMAR.length} bite-size explanations</span></span></button>
+    <button class="menu-card" id="l-conj"><span class="mi">📋</span><span><span class="mt">Conjugation Tables</span><span class="md">Full grids for 14 verbs · 5 tenses</span></span></button>`;
+  document.getElementById("l-story").onclick=showStories;
+  document.getElementById("l-dict").onclick=showDictionary;
+  document.getElementById("l-gram").onclick=showGrammar;
+  document.getElementById("l-conj").onclick=showConjTables;
+}
+function backBtn(fn){ const b=document.createElement("button"); b.className="back-btn"; b.textContent="‹ Back"; b.onclick=fn; return b; }
+
+function showDictionary(){ const m=document.querySelector("#home main");
+  const all=[]; CURRICULUM.forEach(u=>u.lessons.forEach(l=>l.cards.forEach(c=>all.push(c))));
+  all.sort((a,b)=>a[0].localeCompare(b[0]));
+  m.innerHTML=`<div class="unit-banner" style="background:var(--green)"><div><h2>${all.length} words</h2><h1>Dizionario 📒</h1></div></div>
+    <input class="search" id="dq" placeholder="Search Italian or English…"/><div id="dlist"></div>`;
+  m.prepend(backBtn(showLearn));
+  const list=document.getElementById("dlist");
+  function draw(f){ f=(f||"").toLowerCase(); list.innerHTML=""; all.filter(c=>!f||c[0].toLowerCase().includes(f)||c[1].toLowerCase().includes(f)).slice(0,300).forEach(c=>{ const r=document.createElement("div"); r.className="dict-row"; r.innerHTML=`<div><div class="it">${c[0]}</div><div class="en">${c[1]}</div></div><div class="pl">🔊</div>`; r.onclick=()=>speak(c[0]); list.appendChild(r); }); }
+  draw(""); document.getElementById("dq").oninput=e=>draw(e.target.value);
+}
+function showGrammar(){ const m=document.querySelector("#home main");
+  m.innerHTML=`<div class="unit-banner" style="background:var(--green)"><div><h2>Quick reference</h2><h1>Grammatica 📐</h1></div></div>`;
+  m.prepend(backBtn(showLearn));
+  GRAMMAR.forEach(g=>{ const a=document.createElement("div"); a.className="acc"; a.innerHTML=`<h3>${g.t}<span>▾</span></h3><div class="body hidden">${g.b}</div>`; const h=a.querySelector("h3"),bd=a.querySelector(".body"),ar=a.querySelector("span"); h.onclick=()=>{ bd.classList.toggle("hidden"); ar.textContent=bd.classList.contains("hidden")?"▾":"▴"; }; m.appendChild(a); });
+}
+function showConjTables(){ const m=document.querySelector("#home main");
+  const opts=VERBS.map((v,i)=>`<option value="${i}">${v.inf} — ${v.en}</option>`).join("");
+  m.innerHTML=`<div class="unit-banner" style="background:var(--purple)"><div><h2>Tap a form to hear it</h2><h1>Coniugazione 📋</h1></div></div>
+    <div class="settings-box"><label>Verb</label><select id="vsel">${opts}</select></div><div id="ctbl"></div>`;
+  m.prepend(backBtn(showLearn));
+  function draw(i){ const v=VERBS[i]; const tbl=document.getElementById("ctbl"); const cols=TENSES.map(t=>conjugate(v,t.key));
+    let html=`<table class="conj-table"><tr><th></th>${TENSES.map(t=>`<th>${t.name}</th>`).join("")}</tr>`;
+    for(let r=0;r<6;r++){ html+=`<tr><td>${PRONOUNS[r]}</td>${cols.map(c=>`<td class="tap" data-f="${c[r]}">${c[r]}</td>`).join("")}</tr>`; }
+    html+=`</table>`; tbl.innerHTML=html; tbl.querySelectorAll(".tap").forEach(td=>td.onclick=()=>speak(td.dataset.f)); }
+  draw(0); document.getElementById("vsel").onchange=e=>draw(+e.target.value);
+}
+function showStories(){ const m=document.querySelector("#home main");
+  m.innerHTML=`<div class="unit-banner" style="background:var(--green)"><div><h2>Comprehensible input</h2><h1>Storie 📖</h1></div></div>`;
+  m.prepend(backBtn(showLearn));
+  STORIES.forEach((s,i)=>{ const c=document.createElement("button"); c.className="menu-card"; c.innerHTML=`<span class="mi">📖</span><span><span class="mt">${s.title}</span><span class="md">${s.level} · ${s.lines.length} lines</span></span>`; c.onclick=()=>openStory(i); m.appendChild(c); });
+}
+function openStory(i){ const s=STORIES[i],m=document.querySelector("#home main");
+  m.innerHTML=`<div class="unit-banner" style="background:var(--green)"><div><h2>${s.level}</h2><h1>${s.title}</h1></div><div class="guide" id="playAll">▶ Play</div></div><div class="tip">Tap a sentence to reveal the translation · tap a word to hear it &amp; see its meaning.</div><div id="slines"></div>`;
+  m.prepend(backBtn(showStories));
+  const cont=document.getElementById("slines");
+  s.lines.forEach(([it,en])=>{ const row=document.createElement("div"); row.className="story-line";
+    const words=it.split(" ").map(w=>`<span>${w}</span>`).join(" ");
+    row.innerHTML=`<div class="it">${words}</div><div class="tr">tap to translate ▾</div><div class="en">${en}</div>`;
+    row.querySelector(".tr").onclick=()=>{ row.classList.toggle("open"); };
+    row.querySelectorAll(".it span").forEach(sp=>{ sp.onclick=ev=>{ ev.stopPropagation(); const w=sp.textContent; speak(w); const g=glossOf(w); toast(g?`${w} = ${g}`:`🔊 ${w}`); }; });
+    cont.appendChild(row); });
+  document.getElementById("playAll").onclick=()=>playStory(s);
+}
+function playStory(s){ let k=0; const u=()=>{ if(k>=s.lines.length||!window.speechSynthesis) return; const utt=new SpeechSynthesisUtterance(s.lines[k][0]); utt.lang="it-IT"; utt.rate=.9; const v=pickVoice(); if(v)utt.voice=v; utt.onend=()=>{ k++; u(); }; speechSynthesis.speak(utt); }; speechSynthesis.cancel(); u(); }
+
+/* ---------- STATS ---------- */
 function showStats(){ show("home"); loadVoices();
   const lvl=Math.floor(S.xp/100)+1,into=S.xp%100;
-  const strong=Object.values(S.srs).filter(e=>e.s>=4).length, learning=Object.keys(S.srs).length;
-  const best=pickVoice();
-  const voiceOpts=VOICES.length?VOICES.map(v=>`<option value="${v.voiceURI}" ${best&&v.voiceURI===best.voiceURI?"selected":""}>${v.name}</option>`).join(""):`<option>No Italian voice found</option>`;
+  const strong=Object.values(S.srs).filter(e=>e.s>=4).length,learning=Object.keys(S.srs).length;
+  const best=pickVoice(); const voiceOpts=VOICES.length?VOICES.map(v=>`<option value="${v.voiceURI}" ${best&&v.voiceURI===best.voiceURI?"selected":""}>${v.name}</option>`).join(""):`<option>No Italian voice found</option>`;
   document.querySelector("#home main").innerHTML=`
     <div class="unit-banner" style="background:var(--blue)"><div><h2>Your progress</h2><h1>Statistiche 📊</h1></div><div class="guide">Lv. ${lvl}</div></div>
     <div style="display:grid;gap:14px">
@@ -687,23 +774,22 @@ function showStats(){ show("home"); loadVoices();
       <div style="display:flex;gap:14px"><div class="reward blue" style="flex:1;text-align:center"><div class="lbl">STREAK</div><div class="val">🔥 ${S.streak}</div></div><div class="reward" style="flex:1;text-align:center"><div class="lbl">GEMS</div><div class="val">💎 ${S.gems}</div></div></div>
       <div style="display:flex;gap:14px"><div class="reward" style="flex:1;border-color:var(--green);text-align:center"><div class="lbl" style="background:var(--green)">LESSONS</div><div class="val" style="color:var(--green-dark)">${doneCount()}/${totalLessons()}</div></div><div class="reward purple" style="flex:1;text-align:center"><div class="lbl">WORDS SEEN</div><div class="val">${learning}</div></div></div>
       <div class="reward" style="border-color:var(--green);text-align:center;padding:18px"><div style="font-size:13px;color:var(--muted);font-weight:800">WORDS MASTERED (SRS 4+)</div><div style="font-size:34px;font-weight:800;color:var(--green-dark)">${strong}</div></div>
+      <div class="settings-box"><label>🎯 Daily XP goal</label><select id="goalSel">${[10,20,30,50,80].map(g=>`<option value="${g}" ${S.dailyGoal===g?"selected":""}>${g} XP / day</option>`).join("")}</select></div>
       <div class="settings-box"><label>🔊 Italian voice</label><select id="voiceSel">${voiceOpts}</select>
-        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:10px">Best free voices are Microsoft's "Online (Natural)" — Isabella / Elsa / Diego. They appear automatically in <b>Microsoft Edge</b> on Windows. In Chrome you'll usually get "Google italiano". To add more, go to Windows Settings → Time &amp; Language → Speech → add Italian.</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:10px">Best free voices are Microsoft's "Online (Natural)" — Isabella / Elsa / Diego — which appear automatically in <b>Microsoft Edge</b> on Windows. On iPhone, Safari has a good built-in Italian voice. Add more via Windows Settings → Time &amp; Language → Speech.</div>
         <button class="btn blue" id="testVoice" style="margin-top:12px">▶ Test voice</button></div>
       <button class="btn skip" id="resetBtn" style="color:var(--red)">Reset all progress</button>
     </div>`;
+  document.getElementById("goalSel").onchange=e=>{ S.dailyGoal=+e.target.value; save(); };
   document.getElementById("voiceSel").onchange=e=>{ S.voiceURI=e.target.value; save(); };
   document.getElementById("testVoice").onclick=()=>speak("Ciao! Benvenuto. Imparare l'italiano è un piacere.");
   document.getElementById("resetBtn").onclick=()=>{ if(confirm("Erase ALL progress?")){ const th=S.theme,vo=S.voiceURI; S={...defaultState,theme:th,voiceURI:vo}; save(); goHome(); } };
 }
 
-/* ============ NAV ============ */
+/* ---------- NAV ---------- */
 function setNav(v){ [...document.querySelectorAll("#nav button")].forEach(b=>b.classList.toggle("active",b.dataset.view===v)); }
-function refreshBadges(){ const rb=document.querySelector('#nav button[data-view="review"]');
-  const old=rb.querySelector(".ndot"); if(old) old.remove(); const d=dueCount();
-  if(d>0){ const s=document.createElement("span"); s.className="ndot"; s.textContent=d; rb.appendChild(s); } }
-document.querySelectorAll("#nav button").forEach(b=>{ b.onclick=()=>{ const v=b.dataset.view; setNav(v);
-  if(v==="home") goHome(); else if(v==="review") startReview(); else if(v==="train") showTrain(); else if(v==="stats") showStats(); }; });
+function refreshBadges(){ const rb=document.querySelector('#nav button[data-view="review"]'); const old=rb.querySelector(".ndot"); if(old) old.remove(); const d=dueCount(); if(d>0){ const s=document.createElement("span"); s.className="ndot"; s.textContent=d; rb.appendChild(s); } }
+document.querySelectorAll("#nav button").forEach(b=>{ b.onclick=()=>{ const v=b.dataset.view; setNav(v); if(v==="home") goHome(); else if(v==="learn") showLearn(); else if(v==="train") showTrain(); else if(v==="review") startReview(); else if(v==="stats") showStats(); }; });
 
 /* ---------- util ---------- */
 function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
