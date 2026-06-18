@@ -1,5 +1,5 @@
 /* Impara service worker — offline app shell */
-const CACHE = "impara-v9";
+const CACHE = "impara-v10";
 const ASSETS = [
   "./",
   "./index.html",
