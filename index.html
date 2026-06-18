@@ -304,7 +304,7 @@ function buildGloss(){ GLOSS={...GLOSS_EXTRA}; ALL_WORDS.forEach(c=>{ const it=c
 function glossOf(w){ if(!GLOSS) buildGloss(); return GLOSS[w.toLowerCase().replace(/[.,!?;:"]/g,"")]||null; }
 
 /* ---------- state (per language) + prefs (global) ---------- */
-const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0 };
+const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{} };
 const PREFS_KEY="impara_prefs", LANG_SEL_KEY="impara_lang";
 let PREFS=loadPrefs();
 let currentLang=localStorage.getItem(LANG_SEL_KEY)||"it";
@@ -377,8 +377,14 @@ function renderHome(){
     });
     path.appendChild(wrap);
   }
+  function renderCheckpoint(g){ const [s,e]=checkpointRange(g); const done=!!S.checkpoints[g];
+    const allSetsDone=(()=>{ for(let u=s;u<=e;u++){ if(unitDone(u)<CURRICULUM[u].lessons.length) return false; } return true; })();
+    const wrap=document.createElement("div"); wrap.className="path";
+    const node=document.createElement("div"); node.className="node-wrap";
+    node.innerHTML=`<button class="node" style="background:${done?'var(--gold)':'var(--blue)'};box-shadow:0 6px 0 ${done?'#e0a800':'var(--blue-dark)'}">🏁</button><div class="node-label">Checkpoint · Units ${s+1}–${e+1}${allSetsDone?"":" (review)"}</div>`;
+    node.querySelector("button").onclick=()=>startCheckpoint(g); wrap.appendChild(node); path.appendChild(wrap); }
   const h1=document.createElement("div"); h1.className="section-head"; h1.innerHTML=`<div class="line"></div>📖 Words<div class="line"></div>`; path.appendChild(h1);
-  for(let i=0;i<PHRASE_START;i++) renderUnit(i);
+  for(let i=0;i<PHRASE_START;i++){ renderUnit(i); if((i+1)%5===0||i===PHRASE_START-1) renderCheckpoint(Math.floor(i/5)); }
   const h2=document.createElement("div"); h2.className="section-head"; h2.innerHTML=`<div class="line"></div>💬 Phrases<div class="line"></div>`; path.appendChild(h2);
   for(let i=PHRASE_START;i<CURRICULUM.length;i++) renderUnit(i);
   if(currentLang==="it"){
@@ -409,22 +415,32 @@ function makeConj(){ const v=VERBS[Math.floor(Math.random()*VERBS.length)],t=TEN
 function genderItems(){ const out=[]; ALL_WORDS.forEach(c=>{ const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }); return out; }
 function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",gender:{noun:item.noun,en:item.en},options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
 
+function makeFlash(card){ const [it,en,read]=card; return {type:"flash",qtype:"New",label:"Learn this word",native:it,read:read||"",en,speak:it}; }
 function buildQueue(unit,lesson){
-  const les=CURRICULUM[unit].lessons[lesson]; const q=[]; const latin=LANGMETA.latin;
+  const les=CURRICULUM[unit].lessons[lesson]; const latin=LANGMETA.latin; const teach=[],quiz=[];
   if(les.cards){ const pool=ALL_WORDS;
-    les.cards.forEach(c=>q.push(makeMC(c,pool,"it2en")));
-    les.cards.filter((_,i)=>i%2===0).forEach(c=>q.push(makeMC(c,pool,"en2it")));
-    les.cards.filter((_,i)=>i%2===1).forEach(c=>q.push(makeListen(c,pool)));
-    if(latin) les.cards.filter((_,i)=>i%3===0).forEach(c=>q.push(makeType(c)));
-    q.push(makeMatch(les.cards.slice(0,5)));
+    les.cards.forEach(c=>teach.push(makeFlash(c)));                       // 1) learn each word first
+    les.cards.forEach(c=>quiz.push(makeMC(c,pool,"it2en")));
+    les.cards.filter((_,i)=>i%2===0).forEach(c=>quiz.push(makeMC(c,pool,"en2it")));
+    les.cards.filter((_,i)=>i%2===1).forEach(c=>quiz.push(makeListen(c,pool)));
+    if(latin) les.cards.filter((_,i)=>i%3===0).forEach(c=>quiz.push(makeType(c)));
+    quiz.push(makeMatch(les.cards.slice(0,5)));
   } else { const pool=ALL_PHRASES;
-    les.phrases.forEach(p=>q.push(makeListen(p,pool)));
-    les.phrases.forEach(p=>q.push(makeBank(p)));
-    if(latin) les.phrases.filter((_,i)=>i%2===0).forEach(p=>q.push(makeType(p)));
-    q.push(makeMatch(les.phrases.slice(0,5)));
+    les.phrases.forEach(p=>teach.push(makeFlash(p)));
+    les.phrases.forEach(p=>quiz.push(makeListen(p,pool)));
+    les.phrases.forEach(p=>quiz.push(makeBank(p)));
+    if(latin) les.phrases.filter((_,i)=>i%2===0).forEach(p=>quiz.push(makeType(p)));
+    quiz.push(makeMatch(les.phrases.slice(0,5)));
   }
-  return shuffle(q);
+  return teach.concat(shuffle(quiz));                                     // teach in order, then quiz shuffled
 }
+/* checkpoints: cumulative review over a group of 5 vocab units */
+function checkpointRange(g){ const start=g*5,end=Math.min(start+4,PHRASE_START-1); return [start,end]; }
+function checkpointCards(g){ const [s,e]=checkpointRange(g); let cards=[]; for(let u=s;u<=e;u++) CURRICULUM[u].lessons.forEach(l=>cards.push(...(l.cards||[]))); return cards; }
+function startCheckpoint(g){ const cards=checkpointCards(g); if(cards.length<4){ toast("Finish some sets in this section first 🏁"); return; }
+  const pick=shuffle(cards).slice(0,14); const q=pick.map(c=>{ const r=Math.random(); return r<0.34?makeMC(c,ALL_WORDS,"it2en"):(r<0.67?makeMC(c,ALL_WORDS,"en2it"):makeListen(c,ALL_WORDS)); });
+  q.push(makeMatch(shuffle(cards).slice(0,5)));
+  L={queue:shuffle(q),i:0,correct:0,mistakes:0,wrongQ:[],mode:"checkpoint",cp:g}; show("lesson"); renderQuestion(); }
 
 /* ---------- SESSION ---------- */
 let L=null;
@@ -454,6 +470,13 @@ function renderQuestion(){
   else if(q.type==="type") renderType(q,body);
   else if(q.type==="match") renderMatch(q,body);
   else if(q.type==="speak") renderSpeak(q,body);
+  else if(q.type==="flash") renderFlash(q,body);
+}
+function renderFlash(q,body){
+  body.innerHTML=`${audioControls(q,true)}<div class="phrase" style="font-size:30px;margin-bottom:8px">${q.native}</div>${q.read?`<div class="reading">${q.read}</div>`:""}<div class="ctx" style="font-size:20px;color:var(--ink);font-weight:700;margin-top:4px">${q.en}</div><div class="tip" style="margin-top:24px">👀 Learn this one — then you'll be quizzed on it.</div>`;
+  wireAudio(q); speak(q.speak);
+  const foot=document.getElementById("foot"); foot.innerHTML=`<button class="btn blue" id="contBtn">Got it 👍</button>`;
+  document.getElementById("contBtn").onclick=next;
 }
 function audioControls(q,withSlow){ return `<div class="audio-row"><button class="speaker" id="spk">🔊</button>${withSlow?`<button class="speaker slow" id="slow">🐢</button>`:""}</div>`; }
 function wireAudio(q){ const s=document.getElementById("spk"); if(s) s.onclick=()=>speak(q.speak); const sl=document.getElementById("slow"); if(sl) sl.onclick=()=>speakSlow(q.speak); }
@@ -548,6 +571,7 @@ function completeSession(){
   else if(L.mode==="review"||L.mode==="hardest"){ gained=15; S.gems+=8; html=`<div class="big">${L.mode==="hardest"?"🧠":"🔁"}</div><h1 style="color:var(--green)">${L.mode==="hardest"?"Tough words tackled!":"Review done!"}</h1>`; }
   else if(L.mode==="dictation"||L.mode==="gender"||L.mode==="numbers"){ gained=L.mode==="numbers"?10:15; S.gems+=6; const ico=L.mode==="dictation"?"🎧":(L.mode==="numbers"?"🔢":"⚖️"); html=`<div class="big">${ico}</div><h1 style="color:var(--blue)">Nice work!</h1>`; }
   else if(L.mode==="speaking"){ gained=15; S.gems+=8; html=`<div class="big">🗣️</div><h1 style="color:var(--red)">Speaking done!</h1>`; }
+  else if(L.mode==="checkpoint"){ gained=30; S.gems+=15; S.checkpoints[L.cp]=true; html=`<div class="big">🏁</div><h1 style="color:var(--gold)">Checkpoint cleared!</h1>`; }
   else { gained=15+(L.mistakes===0?5:0); S.gems+=10; S.completed[lessonId(L.unit,L.lesson)]=true; html=`<div class="big">🎉</div><h1>Set complete!</h1>`; }
   html+=`<div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${gained||0}</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
   if(gained){ S.xp+=gained; addTodayXp(gained); } save();
