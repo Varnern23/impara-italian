@@ -211,6 +211,7 @@
 
 <script src="data.js"></script>
 <script src="data_more.js"></script>
+<script src="data_fr.js"></script>
 <script>
 /* ============================================================
    IMPARA v6 — multi-language trainer
@@ -286,7 +287,7 @@ function conjugate(v,tense){ if(v.irr&&v.irr[tense]) return v.irr[tense];
 const COLORS=["var(--green)","var(--blue)","#ff9600","var(--purple)"];
 function chunk(a,n){ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
 const LANGS={ it:{code:"it",name:"Italian",flag:"🇮🇹",tts:"it-IT",latin:true,WORD_THEMES:WORD_THEMES,PHRASE_GROUPS:PHRASE_GROUPS,stories:STORIES_IT,grammar:GRAMMAR_IT,alphabets:null}, ...LANG_EXTRA };
-const LANG_ORDER=["it","fr","de","ja","ko"];
+const LANG_ORDER=["it","fr","de","ja","ko","hv"];
 
 /* per-course (rebuilt on language switch) */
 let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,PHRASE_START,STORIES,GRAMMAR,ALPHABETS,GLOSS=null;

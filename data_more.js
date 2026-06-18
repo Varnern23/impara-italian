@@ -163,3 +163,31 @@ LANG_EXTRA.ko = {
   {name:"Hangul vowels 모음", chars:[["a","ㅏ"],["ya","ㅑ"],["eo","ㅓ"],["yeo","ㅕ"],["o","ㅗ"],["yo","ㅛ"],["u","ㅜ"],["yu","ㅠ"],["eu","ㅡ"],["i","ㅣ"],["ae","ㅐ"],["e","ㅔ"]]}
  ]
 };
+
+/* ===================== HIGH VALYRIAN (bonus pack) ===================== */
+/* A constructed language from Game of Thrones. No native TTS exists,
+   so audio uses an English voice — pronunciation is approximate. */
+LANG_EXTRA.hv = {
+ code:"hv", name:"High Valyrian", flag:"🐉", tts:"en-US", latin:true,
+ WORD_THEMES:[
+  {cat:"Greetings & essentials", words:[["rytsas","hello"],["kirimvose","thank you"],["geros ilas","goodbye"],["kostilus","please"],["kessa","yes"],["daor","no"],["se","and"],["ñuha","my"],["aōha","your"],["issa","is / are"],["iksan","I am"],["iksā","you are"],["kesy","this"],["skoros","what"],["sȳz","good"]]},
+  {cat:"People & family", words:[["vala","man"],["ābra","woman"],["riña","girl"],["taoba","boy"],["muña","mother"],["kepa","father"],["tala","daughter"],["trēsy","son"],["dāria","queen"],["dārys","king"],["āeksio","lord / master"],["dohaeriros","servant"],["āzantys","soldier"],["raqiros","friend"],["ñuha raqiros","my friend"]]},
+  {cat:"Dragons & the world", words:[["zaldrīzes","dragon"],["perzys","fire"],["dracarys","dragonfire"],["sōnar","winter"],["hontes","bird"],["embar","sea"],["tegun","earth / ground"],["āegon","? (name)"],["qēlos","? cat"],["hāedar","younger sister"],["valonqar","younger sibling"],["lōgor","? boat"],["geltor","helmet"],["brōzi","name"],["mittys","fool"]]},
+  {cat:"Verbs & qualities", words:[["jorrāelagon","to love"],["dohaeragon","to serve"],["morghūljagon","to die"],["kostagon","to be able"],["gaomagon","to do"],["ipradagon","to eat"],["limagon","to cry"],["sȳz","good"],["kasta","blue"],["kirine","happy"],["āegenka","? royal"],["arlie","new"],["belma","chains"],["buzdari","slave (adj)"],["hen","from"]]},
+  {cat:"Numbers & basics", words:[["mēre","one"],["lanta","two"],["hāre","three"],["izula","four"],["tōma","five"],["naejot","forward / to"],["sīr","now"],["lo","if"],["ynot","to me"],["aōt","to you"],["zȳ","the (some forms)"],["bisa","this"],["kesrio","therefore"],["syt","for"],["va","to / toward"]]},
+ ],
+ PHRASE_GROUPS:[
+  {cat:"Famous lines", phrases:[["Valar morghulis","All men must die"],["Valar dohaeris","All men must serve"],["Dracarys","Dragonfire — burn!"],["Zaldrīzes buzdari iksos daor","A dragon is not a slave"],["Kirimvose","Thank you"],["Rytsas","Hello"],["Geros ilas","Goodbye"],["Kostilus","Please"],["Kessa","Yes"],["Daor","No"]]},
+  {cat:"Basics", phrases:[["Iksan Daenerys","I am Daenerys"],["Ñuha raqiros","My friend"],["Ñuha dārys","My king"],["Skoros issa?","What is it?"],["Sȳz","Good"],["Jorrāelan ao","I love you"],["Dohaeran","I serve"],["Zaldrīzes issa","It is a dragon"],["Perzys ūdr","fire (the word)"],["Geros ilas, raqiros","Goodbye, friend"]]},
+ ],
+ grammar:[
+  {t:"What is High Valyrian?",b:"A constructed language created by David J. Peterson for <i>Game of Thrones</i>, based on the few canonical phrases in the books. This is a small <b>bonus pack</b> of well-known vocabulary and famous lines — not a full course."},
+  {t:"Famous phrases",b:"<b>Valar morghulis</b> — all men must die · <b>Valar dohaeris</b> — all men must serve · <b>Dracarys</b> — dragonfire (the command to breathe fire)."},
+  {t:"A complex grammar",b:"High Valyrian has <b>4 genders</b> (lunar, solar, terrestrial, aquatic), <b>8 noun cases</b>, and rich verb conjugation — far more inflected than English. Treat this pack as fun exposure, not mastery."},
+  {t:"Pronunciation note",b:"No text-to-speech voice exists for High Valyrian, so the 🔊 button uses an English voice and is only a rough approximation. <code>ā</code>, <code>ē</code>, <code>ī</code>, <code>ō</code>, <code>ū</code> are long vowels."},
+ ],
+ stories:[
+  {title:"Daor zaldrīzes", level:"Fun", lines:[["Zaldrīzes buzdari iksos daor.","A dragon is not a slave."],["Valar morghulis.","All men must die."],["Valar dohaeris.","All men must serve."],["Dracarys!","Dragonfire — burn!"]]},
+ ],
+ alphabets:null
+};
