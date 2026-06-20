@@ -22,7 +22,10 @@
   }
   [data-theme="dark"]{ --bg:#131f24; --bg2:#1b2c34; --ink:#f1f1f1; --muted:#7b8b93; --border:#37464f; --card:#1b2c34; }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  html{overflow-x:hidden}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;width:100%;max-width:100vw;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  .phrase,.q-title,.reading,.ctx,.choice,.tile,.dict-row,.menu-card,.unit-banner h1{overflow-wrap:anywhere;word-break:break-word}
+  #ctbl{overflow-x:auto}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   select,input{font-family:inherit}
   .hidden{display:none !important}
@@ -288,15 +291,17 @@ const COLORS=["var(--green)","var(--blue)","#ff9600","var(--purple)"];
 function chunk(a,n){ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
 const LANGS={ it:{code:"it",name:"Italian",flag:"🇮🇹",tts:"it-IT",latin:true,WORD_THEMES:WORD_THEMES,PHRASE_GROUPS:PHRASE_GROUPS,stories:STORIES_IT,grammar:GRAMMAR_IT,alphabets:null}, ...LANG_EXTRA };
 const LANG_ORDER=["it","fr","de","ja","ko","hv"];
+/* Italian conjugation object (built from the generator above) for the generic engine */
+LANGS.it.conj={ pronouns:PRONOUNS, tenses:TENSES, verbs:VERBS.map(v=>({inf:v.inf,en:v.en,forms:Object.fromEntries(TENSES.map(t=>[t.key,conjugate(v,t.key)]))})) };
 
 /* per-course (rebuilt on language switch) */
-let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,PHRASE_START,STORIES,GRAMMAR,ALPHABETS,GLOSS=null;
+let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,PHRASE_START,STORIES,GRAMMAR,ALPHABETS,CONJ,GLOSS=null;
 function buildCourse(code){ const d=LANGS[code]; LANGMETA=d; CURRICULUM=[];
   d.WORD_THEMES.forEach((t,i)=>CURRICULUM.push({unit:"Words "+(i+1),title:t.cat,guide:"🔤",color:COLORS[i%4],kind:"vocab",lessons:chunk(t.words,8).map((c,j)=>({name:"Set "+(j+1),cards:c}))}));
   PHRASE_START=CURRICULUM.length;
   d.PHRASE_GROUPS.forEach((g,i)=>CURRICULUM.push({unit:"Phrases "+(i+1),title:g.cat,guide:"💬",color:COLORS[(i+1)%4],kind:"phrase",lessons:chunk(g.phrases,5).map((c,j)=>({name:"Set "+(j+1),phrases:c}))}));
   ALL_WORDS=d.WORD_THEMES.flatMap(t=>t.words); ALL_PHRASES=d.PHRASE_GROUPS.flatMap(g=>g.phrases); ALL_CARDS=ALL_WORDS.concat(ALL_PHRASES);
-  STORIES=d.stories||[]; GRAMMAR=d.grammar||[]; ALPHABETS=d.alphabets||null; GLOSS=null;
+  STORIES=d.stories||[]; GRAMMAR=d.grammar||[]; ALPHABETS=d.alphabets||null; CONJ=d.conj||null; GLOSS=null;
 }
 
 /* ---------- gloss for stories ---------- */
@@ -306,18 +311,35 @@ function glossOf(w){ if(!GLOSS) buildGloss(); return GLOSS[w.toLowerCase().repla
 
 /* ---------- state (per language) + prefs (global) ---------- */
 const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{} };
-const PREFS_KEY="impara_prefs", LANG_SEL_KEY="impara_lang";
-let PREFS=loadPrefs();
-let currentLang=localStorage.getItem(LANG_SEL_KEY)||"it";
-if(!LANGS[currentLang]) currentLang="it";
-let S;
-function loadPrefs(){ try{ const r=JSON.parse(localStorage.getItem(PREFS_KEY)); if(r) return {theme:"light",sound:true,dailyGoal:30,voice:{},...r}; }catch(e){}
-  // migrate from old italian save
-  try{ const o=JSON.parse(localStorage.getItem("impara_save_v3"))||{}; return {theme:o.theme||"light",sound:o.sound!==false,dailyGoal:o.dailyGoal||30,voice:o.voiceURI?{it:o.voiceURI}:{}}; }catch(e){ return {theme:"light",sound:true,dailyGoal:30,voice:{}}; } }
-function savePrefs(){ localStorage.setItem(PREFS_KEY,JSON.stringify(PREFS)); }
-function stateKey(code){ return code==="it"?"impara_save_v3":"impara_st_"+code; }
+/* ---------- profiles (local accounts) ---------- */
+const PROFILES_KEY="impara_profiles", CUR_PROFILE_KEY="impara_profile";
+const STATE_LANGS=["it","fr","de","ja","ko","hv"];
+let profiles, PROFILE, PREFS, currentLang, S;
+function loadProfilesRaw(){ try{ return JSON.parse(localStorage.getItem(PROFILES_KEY)); }catch(e){ return null; } }
+function saveProfiles(){ localStorage.setItem(PROFILES_KEY,JSON.stringify(profiles)); }
+function pk(suf){ return "p:"+PROFILE+":"+suf; }
+function profKeys(){ return ["prefs","lang"].concat(STATE_LANGS.map(c=>"st:"+c)); }
+function migrateLegacy(id){ const map={"impara_save_v3":"st:it","impara_st_fr":"st:fr","impara_st_de":"st:de","impara_st_ja":"st:ja","impara_st_ko":"st:ko","impara_st_hv":"st:hv","impara_prefs":"prefs","impara_lang":"lang"};
+  for(const k in map){ const v=localStorage.getItem(k); if(v!=null && localStorage.getItem("p:"+id+":"+map[k])==null) localStorage.setItem("p:"+id+":"+map[k],v); } }
+function initProfiles(){ profiles=loadProfilesRaw(); if(!profiles||!profiles.length){ profiles=[{id:"default",name:"Player 1"}]; saveProfiles(); migrateLegacy("default"); localStorage.setItem(CUR_PROFILE_KEY,"default"); }
+  PROFILE=localStorage.getItem(CUR_PROFILE_KEY); if(!PROFILE||!profiles.find(p=>p.id===PROFILE)) PROFILE=profiles[0].id; }
+function profileName(){ const p=profiles.find(x=>x.id===PROFILE); return p?p.name:"Profile"; }
+function newId(){ return "u"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
+function stateKey(code){ return pk("st:"+code); }
+function loadPrefs(){ try{ const r=JSON.parse(localStorage.getItem(pk("prefs"))); if(r) return {theme:"light",sound:true,dailyGoal:30,voice:{},...r}; }catch(e){} return {theme:"light",sound:true,dailyGoal:30,voice:{}}; }
+function savePrefs(){ localStorage.setItem(pk("prefs"),JSON.stringify(PREFS)); }
 function loadState(code){ try{ const r=JSON.parse(localStorage.getItem(stateKey(code))); return r?{...defState,...r}:{...defState}; }catch(e){ return {...defState}; } }
 function save(){ localStorage.setItem(stateKey(currentLang),JSON.stringify(S)); }
+function applyProfile(){ PREFS=loadPrefs(); currentLang=localStorage.getItem(pk("lang"))||"it"; if(!LANGS[currentLang]) currentLang="it"; S=loadState(currentLang); buildCourse(currentLang); }
+function switchProfile(id){ if(!profiles.find(p=>p.id===id)) return; PROFILE=id; localStorage.setItem(CUR_PROFILE_KEY,id); applyProfile(); applyTheme(); buildLangSel(); loadVoices(); openUnit=-1; goHome(); }
+function createProfile(name){ const id=newId(); profiles.push({id,name:(name&&name.trim())?name.trim():("Player "+(profiles.length+1))}); saveProfiles(); switchProfile(id); }
+function renameProfile(id,name){ const p=profiles.find(x=>x.id===id); if(p&&name&&name.trim()){ p.name=name.trim(); saveProfiles(); } }
+function deleteProfile(id){ if(profiles.length<=1){ toast("Keep at least one profile"); return; } profKeys().forEach(suf=>localStorage.removeItem("p:"+id+":"+suf)); profiles=profiles.filter(p=>p.id!==id); saveProfiles(); if(PROFILE===id) switchProfile(profiles[0].id); else showStats(); }
+function exportCode(){ const data={}; profKeys().forEach(suf=>{ const v=localStorage.getItem(pk(suf)); if(v!=null) data[suf]=v; }); return "IMPARA1."+btoa(unescape(encodeURIComponent(JSON.stringify({v:1,name:profileName(),data})))); }
+function importCode(code){ try{ code=(code||"").trim(); if(code.indexOf("IMPARA1.")!==0) throw 0; const payload=JSON.parse(decodeURIComponent(escape(atob(code.slice(8))))); const id=newId(); profiles.push({id,name:(payload.name||"Imported")+" (imported)"}); saveProfiles(); for(const suf in payload.data) localStorage.setItem("p:"+id+":"+suf,payload.data[suf]); switchProfile(id); toast("Imported ✓"); }catch(e){ toast("Invalid backup code"); } }
+initProfiles();
+PREFS=loadPrefs();
+currentLang=localStorage.getItem(pk("lang"))||"it"; if(!LANGS[currentLang]) currentLang="it";
 
 function lessonId(u,l){ return u+"-"+l; }
 function isDone(u,l){ return !!S.completed[lessonId(u,l)]; }
@@ -347,7 +369,7 @@ function speakSlow(t){ speak(t,.55); }
 /* ---------- language switch ---------- */
 function buildLangSel(){ const s=document.getElementById("langSel"); s.innerHTML=LANG_ORDER.map(c=>`<option value="${c}" ${c===currentLang?"selected":""}>${LANGS[c].flag} ${LANGS[c].name}</option>`).join("");
   s.onchange=e=>switchLang(e.target.value); }
-function switchLang(code){ currentLang=code; localStorage.setItem(LANG_SEL_KEY,code); S=loadState(code); buildCourse(code); loadVoices(); openUnit=-1; goHome(); toast(LANGS[code].flag+" "+LANGS[code].name); }
+function switchLang(code){ currentLang=code; localStorage.setItem(pk("lang"),code); S=loadState(code); buildCourse(code); loadVoices(); openUnit=-1; goHome(); toast(LANGS[code].flag+" "+LANGS[code].name); }
 
 /* ---------- HOME ---------- */
 let openUnit=-1;
@@ -388,10 +410,10 @@ function renderHome(){
   for(let i=0;i<PHRASE_START;i++){ renderUnit(i); if((i+1)%5===0||i===PHRASE_START-1) renderCheckpoint(Math.floor(i/5)); }
   const h2=document.createElement("div"); h2.className="section-head"; h2.innerHTML=`<div class="line"></div>💬 Phrases<div class="line"></div>`; path.appendChild(h2);
   for(let i=PHRASE_START;i<CURRICULUM.length;i++) renderUnit(i);
-  if(currentLang==="it"){
+  if(CONJ){
     const h3=document.createElement("div"); h3.className="section-head"; h3.innerHTML=`<div class="line"></div>🏛️ Grammar<div class="line"></div>`; path.appendChild(h3);
     const cb=document.createElement("div"); cb.className="unit-banner"; cb.style.background="var(--purple)";
-    cb.innerHTML=`<div><h2>Grammar Gym</h2><h1>Verb Conjugation</h1><div class="unit-prog">5 tenses · 14 verbs</div></div><div class="guide">🔤</div>`;
+    cb.innerHTML=`<div><h2>Grammar Gym</h2><h1>Verb Conjugation</h1><div class="unit-prog">${CONJ.tenses.length} tenses · ${CONJ.verbs.length} verbs</div></div><div class="guide">🔤</div>`;
     cb.onclick=startConjugation; path.appendChild(cb);
   }
   refreshBadges();
@@ -409,10 +431,11 @@ function makeMatch(cards){ return {type:"match",qtype:"Match the pairs",pairs:ca
 function makeDictation(sent){ const [it,en]=sent; return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:en,speak:it,answer:it,label:"Listen and type what you hear",term:it,termEn:en}; }
 function makeSpeak(card){ const [it,en,read]=card; return {type:"speak",qtype:"Speaking",prompt:it,read:read||"",en,speak:it,answer:it,label:"Say this out loud",term:it,termEn:en}; }
 function makeNumber(){ const n=Math.floor(Math.random()*101); return {type:"type",qtype:"Numbers",prompt:null,dictation:true,hint:"type the number you hear (digits)",speak:String(n),answer:String(n),term:"num·"+n,termEn:String(n)}; }
-function makeConj(){ const v=VERBS[Math.floor(Math.random()*VERBS.length)],t=TENSES[Math.floor(Math.random()*TENSES.length)],idx=Math.floor(Math.random()*6);
-  const forms=conjugate(v,t.key),answer=forms[idx]; const wrong=new Set(); forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
-  while(wrong.size<3){ const ov=VERBS[Math.floor(Math.random()*VERBS.length)]; const f=conjugate(ov,t.key)[Math.floor(Math.random()*6)]; if(f!==answer) wrong.add(f); }
-  return {type:"mc",qtype:"Conjugation · "+t.name,conj:{pronoun:PRONOUNS[idx],inf:v.inf,en:v.en,tense:t.name},options:shuffle([answer,...[...wrong].slice(0,3)]),answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PRONOUNS[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
+function makeConj(){ const VB=CONJ.verbs,TS=CONJ.tenses,PR=CONJ.pronouns;
+  const v=VB[Math.floor(Math.random()*VB.length)],t=TS[Math.floor(Math.random()*TS.length)],idx=Math.floor(Math.random()*PR.length);
+  const forms=v.forms[t.key],answer=forms[idx]; const wrong=new Set(); forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
+  while(wrong.size<3){ const ov=VB[Math.floor(Math.random()*VB.length)],of=ov.forms[t.key][Math.floor(Math.random()*PR.length)]; if(of!==answer) wrong.add(of); if(wrong.size>20) break; }
+  return {type:"mc",qtype:"Conjugation · "+t.name,conj:{pronoun:PR[idx],inf:v.inf,en:v.en,tense:t.name},options:shuffle([answer,...[...wrong].slice(0,3)]),answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PR[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
 function genderItems(){ const out=[]; ALL_WORDS.forEach(c=>{ const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }); return out; }
 function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",gender:{noun:item.noun,en:item.en},options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
 
@@ -522,6 +545,12 @@ function renderMatch(q,body){
   }; mg.appendChild(b); });
   setCheck(()=>({right:true,correct:""}),()=>solved===q.pairs.length);
 }
+let _activeRec=null;
+function stopRec(){ if(_activeRec){ try{_activeRec.abort();}catch(e){} _activeRec=null; } }
+function _lev(a,b){ const m=a.length,n=b.length; if(!m) return n; if(!n) return m; let prev=Array.from({length:n+1},(_,j)=>j),cur=new Array(n+1);
+  for(let i=1;i<=m;i++){ cur[0]=i; for(let j=1;j<=n;j++){ cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1)); } [prev,cur]=[cur,prev]; } return prev[n]; }
+function simScore(a,b){ a=a||""; b=b||""; if(a===b) return 1; const L=Math.max(a.length,b.length); return L?1-_lev(a,b)/L:1; }
+function speakNorm(s){ return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[.,!?;:'’"、。]/g,"").replace(/\s+/g,"").trim(); }
 function renderSpeak(q,body){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const supported=!!SR && window.isSecureContext;
@@ -531,25 +560,29 @@ function renderSpeak(q,body){
     <div class="heard" id="heard" style="display:none"></div>`;
   wireAudio(q); speak(q.speak);
   const foot=document.getElementById("foot");
-  foot.innerHTML=`<button class="btn" id="saidBtn">I said it ✓</button><button class="btn skip" id="skipBtn" style="margin-top:10px">Skip</button>`;
-  document.getElementById("saidBtn").onclick=()=>evalSpeak(true,q);
-  document.getElementById("skipBtn").onclick=()=>evalSpeak(false,q);
-  const mic=document.getElementById("mic"),hint=document.getElementById("micHint");
+  foot.innerHTML = supported
+    ? `<button class="btn skip" id="skipBtn">Can't speak now — skip</button>`
+    : `<button class="btn" id="saidBtn">I said it ✓</button><button class="btn skip" id="skipBtn" style="margin-top:10px">Skip</button>`;
+  const skipB=document.getElementById("skipBtn"); if(skipB) skipB.onclick=()=>evalSpeak(false,q);
+  const saidB=document.getElementById("saidBtn"); if(saidB) saidB.onclick=()=>evalSpeak(true,q);
+  const mic=document.getElementById("mic"),hint=document.getElementById("micHint"); const myIdx=L.i;
   mic.onclick=()=>{ speak(q.speak); if(!supported){ toast("Open the online site in Chrome/Edge for voice input"); return; }
-    let rec; try{ rec=new SR(); }catch(e){ toast("Speech input unavailable here"); return; }
-    rec.lang=LANGMETA.tts; rec.interimResults=true; rec.maxAlternatives=3; rec.continuous=false;
+    stopRec(); let rec; try{ rec=new SR(); }catch(e){ toast("Speech input unavailable here"); return; } _activeRec=rec;
+    rec.lang=LANGMETA.tts; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=false;
     let got=false; mic.classList.add("live"); hint.textContent="Listening… speak now";
-    rec.onresult=e=>{ const res=e.results[e.results.length-1]; const alts=[...res].map(r=>r.transcript);
-      if(!res.isFinal){ const h=document.getElementById("heard"); h.style.display="block"; h.innerHTML=`…${alts[0]}`; return; }
-      got=true; const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[.,!?;'’、。]/g,"").replace(/\s+/g,"").trim();
-      const target=norm(q.answer); let best=0,heard=alts[0]; alts.forEach(a=>{ const A=norm(a); let sc=0; if(A===target) sc=1; else { let m=0; for(const ch of new Set(target)) if(A.includes(ch)) m++; sc=m/Math.max(1,new Set(target).size); } if(sc>best){best=sc;heard=a;} });
-      mic.classList.remove("live"); const h=document.getElementById("heard"); h.style.display="block"; h.innerHTML=`You said: <b>${heard}</b>`; evalSpeak(best>=0.6,q); };
-    rec.onerror=ev=>{ mic.classList.remove("live"); hint.textContent = ev.error==="not-allowed"?"Microphone blocked — allow mic access in your browser":(ev.error==="no-speech"?"Didn't hear anything — tap to retry":"Tap to retry"); };
-    rec.onend=()=>{ mic.classList.remove("live"); if(!got&&hint.textContent.startsWith("Listening")) hint.textContent="Didn't catch that — tap to retry"; };
+    rec.onresult=e=>{ if(L.i!==myIdx) return; const res=e.results[e.results.length-1]; const alts=[...res].map(r=>r.transcript);
+      if(!res.isFinal){ const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.textContent="… "+alts[0]; } return; }
+      got=true; const target=speakNorm(q.answer); let best=0,heard=alts[0]; alts.forEach(a=>{ const sc=simScore(speakNorm(a),target); if(sc>best){ best=sc; heard=a; } });
+      mic.classList.remove("live"); _activeRec=null; const ok=best>=0.67;
+      const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.innerHTML=`You said: <b>${heard}</b> · ${Math.round(best*100)}% match`; }
+      evalSpeak(ok,q); };
+    rec.onerror=ev=>{ if(L.i!==myIdx) return; mic.classList.remove("live"); hint.textContent = ev.error==="not-allowed"?"Microphone blocked — allow mic access in your browser":(ev.error==="no-speech"?"Didn't hear anything — tap to retry":"Tap to retry"); };
+    rec.onend=()=>{ mic.classList.remove("live"); if(_activeRec===rec) _activeRec=null; if(!got&&L.i===myIdx&&hint.textContent.startsWith("Listening")) hint.textContent="Didn't catch that — tap to retry"; };
     try{ rec.start(); }catch(e){ mic.classList.remove("live"); } };
 }
-function evalSpeak(right,q){ sfx(right?"correct":"wrong"); if(right) L.correct++; else { L.mistakes++; L.wrongQ.push(q); } if(q.term) srsTouch(q.term,q.termEn||"",right); save();
-  const foot=document.getElementById("foot"); foot.className="foot show-result "+(right?"correct":"incorrect");
+function evalSpeak(right,q){ stopRec(); const foot=document.getElementById("foot"); if(!foot||foot.classList.contains("show-result")) return;
+  sfx(right?"correct":"wrong"); if(right) L.correct++; else { L.mistakes++; L.wrongQ.push(q); } if(q.term) srsTouch(q.term,q.termEn||"",right); save();
+  foot.className="foot show-result "+(right?"correct":"incorrect");
   foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Bravo!":"❌ Target:"}${right?"":`<span class="sub">${q.answer}</span>`}</div><button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
   document.getElementById("contBtn").onclick=next; }
 
@@ -563,7 +596,7 @@ function doCheck(){ const {right,correct}=_checkFn(),q=L.queue[L.i];
 function showResult(right,correct){ sfx(right?"correct":"wrong"); const foot=document.getElementById("foot"); foot.className="foot show-result "+(right?"correct":"incorrect");
   foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Bravo!":"❌ Correct answer:"}${right?"":`<span class="sub">${correct}</span>`}</div><button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
   document.getElementById("contBtn").onclick=next; }
-function next(){ L.i++; if(L.i>=L.queue.length){ if(L.wrongQ.length){ L.queue.push(...L.wrongQ); L.wrongQ=[]; renderQuestion(); return; } return completeSession(); } renderQuestion(); }
+function next(){ stopRec(); if(window.speechSynthesis) speechSynthesis.cancel(); L.i++; if(L.i>=L.queue.length){ if(L.wrongQ.length){ L.queue.push(...L.wrongQ); L.wrongQ=[]; renderQuestion(); return; } return completeSession(); } renderQuestion(); }
 
 function completeSession(){
   const acc=Math.round((L.correct/(L.correct+L.mistakes||1))*100); bumpStreak(); let html,gained=0;
@@ -580,17 +613,17 @@ function completeSession(){
   document.getElementById("lesson").innerHTML=`<div class="center-screen">${html}${goalHit?'<p style="color:var(--gold);font-weight:800">🏆 Daily goal reached!</p>':''}<button class="btn" style="max-width:280px" id="doneBtn">Continue</button></div>`;
   sfx("complete"); confetti(); document.getElementById("doneBtn").onclick=goHome;
 }
-function goHome(){ show("home"); document.querySelector("#home main").innerHTML='<div id="path"></div>'; renderHome(); setNav("home"); }
+function goHome(){ stopRec(); if(window.speechSynthesis) speechSynthesis.cancel(); show("home"); document.querySelector("#home main").innerHTML='<div id="path"></div>'; renderHome(); setNav("home"); }
 
 /* ---------- TRAIN ---------- */
-function showTrain(){ show("home"); const due=dueCount(); const it=currentLang==="it";
+function showTrain(){ show("home"); const due=dueCount(); const it=currentLang==="it"; const cj=!!CONJ;
   document.querySelector("#home main").innerHTML=`
     <div class="unit-banner" style="background:var(--blue)"><div><h2>Sharpen your skills</h2><h1>Train 🏋️</h1></div></div>
     <button class="menu-card" id="m-prac"><span class="mi">🎯</span><span><span class="mt">Quick Practice</span><span class="md">Mixed review of finished sets</span></span></button>
     <button class="menu-card" id="m-speak"><span class="mi">🗣️</span><span><span class="mt">Speaking Practice</span><span class="md">Say it out loud — checks pronunciation</span></span></button>
     <button class="menu-card" id="m-dict"><span class="mi">🎧</span><span><span class="mt">${LANGMETA.latin?"Dictation":"Listening"}</span><span class="md">${LANGMETA.latin?"Hear a phrase, type it":"Hear a phrase, pick the meaning"}</span></span></button>
-    ${it?`<button class="menu-card" id="m-conj"><span class="mi">🏛️</span><span><span class="mt">Conjugation Gym</span><span class="md">14 verbs across 5 tenses</span></span></button>
-    <button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Noun gender &amp; articles</span></span></button>`:""}
+    ${cj?`<button class="menu-card" id="m-conj"><span class="mi">🏛️</span><span><span class="mt">Conjugation Gym</span><span class="md">${CONJ.verbs.length} verbs · ${CONJ.tenses.length} tenses</span></span></button>`:""}
+    ${it?`<button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Noun gender &amp; articles</span></span></button>`:""}
     <button class="menu-card" id="m-num"><span class="mi">🔢</span><span><span class="mt">Numbers</span><span class="md">Listen and type numbers 0–100</span></span></button>
     <button class="menu-card" id="m-hard"><span class="mi">🧠</span><span><span class="mt">Hardest Words</span><span class="md">Targets your weakest vocabulary</span></span></button>
     <button class="menu-card" id="m-rev"><span class="mi">🔁</span><span><span class="mt">Spaced Review</span><span class="md">Words due for revision</span></span>${due?`<span class="badge">${due}</span>`:""}</button>`;
@@ -607,7 +640,7 @@ function showLearn(){ show("home");
     <button class="menu-card" id="l-dict"><span class="mi">📒</span><span><span class="mt">Dictionary</span><span class="md">All ${ALL_WORDS.length} words · tap to hear</span></span></button>
     <button class="menu-card" id="l-phr"><span class="mi">💬</span><span><span class="mt">Phrasebook</span><span class="md">All ${ALL_PHRASES.length} phrases · tap to hear</span></span></button>
     <button class="menu-card" id="l-gram"><span class="mi">📐</span><span><span class="mt">Grammar Notes</span><span class="md">${GRAMMAR.length} explanations</span></span></button>
-    ${currentLang==="it"?`<button class="menu-card" id="l-conj"><span class="mi">📋</span><span><span class="mt">Conjugation Tables</span><span class="md">14 verbs · 5 tenses</span></span></button>`:""}`;
+    ${CONJ?`<button class="menu-card" id="l-conj"><span class="mi">📋</span><span><span class="mt">Conjugation Tables</span><span class="md">${CONJ.verbs.length} verbs · ${CONJ.tenses.length} tenses</span></span></button>`:""}`;
   if(ALPHABETS) document.getElementById("l-alpha").onclick=showAlphabets;
   document.getElementById("l-story").onclick=showStories;
   document.getElementById("l-dict").onclick=()=>showWordList("Dictionary 📒",ALL_WORDS,"Search…");
@@ -630,12 +663,12 @@ function showGrammar(){ const m=document.querySelector("#home main"); m.innerHTM
   if(!GRAMMAR.length){ const p=document.createElement("p"); p.style.cssText="color:var(--muted);font-weight:600;padding:20px"; p.textContent="Grammar notes coming soon for this language."; m.appendChild(p); return; }
   GRAMMAR.forEach(g=>{ const a=document.createElement("div"); a.className="acc"; a.innerHTML=`<h3>${g.t}<span>▾</span></h3><div class="body hidden">${g.b}</div>`; const h=a.querySelector("h3"),bd=a.querySelector(".body"),ar=a.querySelector("span"); h.onclick=()=>{ bd.classList.toggle("hidden"); ar.textContent=bd.classList.contains("hidden")?"▾":"▴"; }; m.appendChild(a); });
 }
-function showConjTables(){ const m=document.querySelector("#home main"); const opts=VERBS.map((v,i)=>`<option value="${i}">${v.inf} — ${v.en}</option>`).join("");
+function showConjTables(){ const m=document.querySelector("#home main"); if(!CONJ){ showLearn(); return; } const VB=CONJ.verbs,TS=CONJ.tenses,PR=CONJ.pronouns; const opts=VB.map((v,i)=>`<option value="${i}">${v.inf} — ${v.en}</option>`).join("");
   m.innerHTML=`<div class="unit-banner" style="background:var(--purple)"><div><h2>Tap a form to hear it</h2><h1>Conjugation 📋</h1></div></div><div class="settings-box"><label>Verb</label><select id="vsel">${opts}</select></div><div id="ctbl"></div>`;
   m.prepend(backBtn(showLearn));
-  function draw(i){ const v=VERBS[i],tbl=document.getElementById("ctbl"),cols=TENSES.map(t=>conjugate(v,t.key));
-    let h=`<table class="conj-table"><tr><th></th>${TENSES.map(t=>`<th>${t.name}</th>`).join("")}</tr>`;
-    for(let r=0;r<6;r++) h+=`<tr><td>${PRONOUNS[r]}</td>${cols.map(c=>`<td class="tap" data-f="${c[r]}">${c[r]}</td>`).join("")}</tr>`;
+  function draw(i){ const v=VB[i],tbl=document.getElementById("ctbl"),cols=TS.map(t=>v.forms[t.key]);
+    let h=`<table class="conj-table"><tr><th></th>${TS.map(t=>`<th>${t.name}</th>`).join("")}</tr>`;
+    for(let r=0;r<PR.length;r++) h+=`<tr><td>${PR[r]}</td>${cols.map(c=>`<td class="tap" data-f="${c[r]}">${c[r]}</td>`).join("")}</tr>`;
     h+=`</table>`; tbl.innerHTML=h; tbl.querySelectorAll(".tap").forEach(td=>td.onclick=()=>speak(td.dataset.f)); }
   draw(0); document.getElementById("vsel").onchange=e=>draw(+e.target.value);
 }
@@ -662,6 +695,18 @@ function showStats(){ show("home"); loadVoices();
   document.querySelector("#home main").innerHTML=`
     <div class="unit-banner" style="background:var(--blue)"><div><h2>${LANGMETA.flag} ${LANGMETA.name}</h2><h1>Stats 📊</h1></div><div class="guide">Lv. ${lvl}</div></div>
     <div style="display:grid;gap:14px">
+      <div class="settings-box"><label>👤 Profile — ${profileName()}</label>
+        <select id="profSel">${profiles.map(p=>`<option value="${p.id}" ${p.id===PROFILE?"selected":""}>${p.name}</option>`).join("")}</select>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn skip" id="profNew" style="flex:1">+ New</button>
+          <button class="btn skip" id="profRen" style="flex:1">Rename</button>
+          <button class="btn skip" id="profDel" style="flex:1;color:var(--red)">Delete</button>
+        </div>
+        <button class="btn blue" id="profExport" style="margin-top:10px">⬆ Export backup code</button>
+        <input class="search" id="profImport" placeholder="Paste a backup code…" style="margin:10px 0 0"/>
+        <button class="btn" id="profImportBtn" style="margin-top:10px">⬇ Import code</button>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:10px">Profiles live on this device. <b>Export</b> copies a code; <b>Import</b> it on another device (or browser) to move all your progress across every language.</div>
+      </div>
       <div class="reward" style="border-color:var(--gold);text-align:center;padding:18px"><div style="font-size:13px;color:var(--muted);font-weight:800">TOTAL XP — Level ${lvl} (${into}/100)</div><div style="font-size:34px;font-weight:800;color:var(--gold)">${S.xp}</div></div>
       <div style="display:flex;gap:14px"><div class="reward blue" style="flex:1;text-align:center"><div class="lbl">STREAK</div><div class="val">🔥 ${S.streak}</div></div><div class="reward" style="flex:1;text-align:center"><div class="lbl">GEMS</div><div class="val">💎 ${S.gems}</div></div></div>
       <div style="display:flex;gap:14px"><div class="reward" style="flex:1;border-color:var(--green);text-align:center"><div class="lbl" style="background:var(--green)">SETS DONE</div><div class="val" style="color:var(--green-dark)">${doneCount()}/${totalLessons()}</div></div><div class="reward purple" style="flex:1;text-align:center"><div class="lbl">WORDS SEEN</div><div class="val">${learning}</div></div></div>
@@ -673,6 +718,12 @@ function showStats(){ show("home"); loadVoices();
         <button class="btn blue" id="testVoice" style="margin-top:12px">▶ Test voice</button></div>
       <button class="btn skip" id="resetBtn" style="color:var(--red)">Reset ${LANGMETA.name} progress</button>
     </div>`;
+  document.getElementById("profSel").onchange=e=>switchProfile(e.target.value);
+  document.getElementById("profNew").onclick=()=>{ const n=prompt("New profile name:"); if(n!==null) createProfile(n); };
+  document.getElementById("profRen").onclick=()=>{ const n=prompt("Rename profile:",profileName()); if(n!==null){ renameProfile(PROFILE,n); showStats(); } };
+  document.getElementById("profDel").onclick=()=>{ if(confirm("Delete profile \""+profileName()+"\" and all its progress on this device?")) deleteProfile(PROFILE); };
+  document.getElementById("profExport").onclick=()=>{ const c=exportCode(); try{navigator.clipboard.writeText(c);}catch(e){} prompt("Backup code (copied to clipboard). Save it or paste on another device:",c); };
+  document.getElementById("profImportBtn").onclick=()=>{ const v=document.getElementById("profImport").value; if(v.trim()) importCode(v); };
   document.getElementById("goalSel").onchange=e=>{ PREFS.dailyGoal=+e.target.value; savePrefs(); };
   document.getElementById("soundSel").onchange=e=>{ PREFS.sound=e.target.value==="on"; savePrefs(); if(PREFS.sound) sfx("correct"); };
   document.getElementById("voiceSel").onchange=e=>{ PREFS.voice[currentLang]=e.target.value; savePrefs(); };

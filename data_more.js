@@ -50,6 +50,20 @@ LANG_EXTRA.fr = {
 /* ===================== GERMAN ===================== */
 LANG_EXTRA.de = {
  code:"de", name:"German", flag:"🇩🇪", tts:"de-DE", latin:true,
+ conj:{ pronouns:["ich","du","er/sie/es","wir","ihr","sie/Sie"],
+  tenses:[{key:"praes",name:"Präsens"},{key:"perf",name:"Perfekt"},{key:"praet",name:"Präteritum"}],
+  verbs:[
+   {inf:"sein",en:"to be",forms:{praes:["bin","bist","ist","sind","seid","sind"],perf:["bin gewesen","bist gewesen","ist gewesen","sind gewesen","seid gewesen","sind gewesen"],praet:["war","warst","war","waren","wart","waren"]}},
+   {inf:"haben",en:"to have",forms:{praes:["habe","hast","hat","haben","habt","haben"],perf:["habe gehabt","hast gehabt","hat gehabt","haben gehabt","habt gehabt","haben gehabt"],praet:["hatte","hattest","hatte","hatten","hattet","hatten"]}},
+   {inf:"machen",en:"to do/make",forms:{praes:["mache","machst","macht","machen","macht","machen"],perf:["habe gemacht","hast gemacht","hat gemacht","haben gemacht","habt gemacht","haben gemacht"],praet:["machte","machtest","machte","machten","machtet","machten"]}},
+   {inf:"gehen",en:"to go",forms:{praes:["gehe","gehst","geht","gehen","geht","gehen"],perf:["bin gegangen","bist gegangen","ist gegangen","sind gegangen","seid gegangen","sind gegangen"],praet:["ging","gingst","ging","gingen","gingt","gingen"]}},
+   {inf:"kommen",en:"to come",forms:{praes:["komme","kommst","kommt","kommen","kommt","kommen"],perf:["bin gekommen","bist gekommen","ist gekommen","sind gekommen","seid gekommen","sind gekommen"],praet:["kam","kamst","kam","kamen","kamt","kamen"]}},
+   {inf:"sprechen",en:"to speak",forms:{praes:["spreche","sprichst","spricht","sprechen","sprecht","sprechen"],perf:["habe gesprochen","hast gesprochen","hat gesprochen","haben gesprochen","habt gesprochen","haben gesprochen"],praet:["sprach","sprachst","sprach","sprachen","spracht","sprachen"]}},
+   {inf:"essen",en:"to eat",forms:{praes:["esse","isst","isst","essen","esst","essen"],perf:["habe gegessen","hast gegessen","hat gegessen","haben gegessen","habt gegessen","haben gegessen"],praet:["aß","aßest","aß","aßen","aßt","aßen"]}},
+   {inf:"können",en:"to be able",forms:{praes:["kann","kannst","kann","können","könnt","können"],perf:["habe gekonnt","hast gekonnt","hat gekonnt","haben gekonnt","habt gekonnt","haben gekonnt"],praet:["konnte","konntest","konnte","konnten","konntet","konnten"]}},
+   {inf:"wollen",en:"to want",forms:{praes:["will","willst","will","wollen","wollt","wollen"],perf:["habe gewollt","hast gewollt","hat gewollt","haben gewollt","habt gewollt","haben gewollt"],praet:["wollte","wolltest","wollte","wollten","wolltet","wollten"]}},
+   {inf:"fahren",en:"to drive/go",forms:{praes:["fahre","fährst","fährt","fahren","fahrt","fahren"],perf:["bin gefahren","bist gefahren","ist gefahren","sind gefahren","seid gefahren","sind gefahren"],praet:["fuhr","fuhrst","fuhr","fuhren","fuhrt","fuhren"]}}
+  ] },
  WORD_THEMES:[
   {cat:"Greetings & basics", words:[["hallo","hello"],["guten Morgen","good morning"],["guten Tag","good day"],["guten Abend","good evening"],["tschüss","bye"],["auf Wiedersehen","goodbye"],["danke","thank you"],["bitte","please / you're welcome"],["ja","yes"],["nein","no"],["entschuldigung","excuse me / sorry"],["willkommen","welcome"],["bis bald","see you soon"],["genau","exactly"],["vielleicht","maybe"]]},
   {cat:"People & family", words:[["die Familie","the family"],["der Vater","the father"],["die Mutter","the mother"],["der Bruder","the brother"],["die Schwester","the sister"],["der Sohn","the son"],["die Tochter","the daughter"],["das Kind","the child"],["der Mann","the man / husband"],["die Frau","the woman / wife"],["der Freund","the friend (m)"],["die Freundin","the friend (f)"],["die Eltern","the parents"],["das Baby","the baby"],["der Name","the name"]]},
