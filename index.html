@@ -307,13 +307,25 @@ const LANG_ORDER=["it","fr","de","ja","ko","hv"];
 LANGS.it.conj={ pronouns:PRONOUNS, tenses:TENSES, verbs:VERBS.map(v=>({inf:v.inf,en:v.en,forms:Object.fromEntries(TENSES.map(t=>[t.key,conjugate(v,t.key)]))})) };
 
 /* per-course (rebuilt on language switch) */
-let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,PHRASE_START,STORIES,GRAMMAR,ALPHABETS,CONJ,GLOSS=null;
+let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,PHRASE_START,CONJ_START,ORDER,STORIES,GRAMMAR,ALPHABETS,CONJ,GLOSS=null;
 function buildCourse(code){ const d=LANGS[code]; LANGMETA=d; CURRICULUM=[];
   d.WORD_THEMES.forEach((t,i)=>CURRICULUM.push({unit:"Words "+(i+1),title:t.cat,guide:"🔤",color:COLORS[i%4],kind:"vocab",lessons:chunk(t.words,8).map((c,j)=>({name:"Set "+(j+1),cards:c}))}));
   PHRASE_START=CURRICULUM.length;
   d.PHRASE_GROUPS.forEach((g,i)=>CURRICULUM.push({unit:"Phrases "+(i+1),title:g.cat,guide:"💬",color:COLORS[(i+1)%4],kind:"phrase",lessons:chunk(g.phrases,5).map((c,j)=>({name:"Set "+(j+1),phrases:c}))}));
   ALL_WORDS=d.WORD_THEMES.flatMap(t=>t.words); ALL_PHRASES=d.PHRASE_GROUPS.flatMap(g=>g.phrases); ALL_CARDS=ALL_WORDS.concat(ALL_PHRASES);
   STORIES=d.stories||[]; GRAMMAR=d.grammar||[]; ALPHABETS=d.alphabets||null; CONJ=d.conj||null; GLOSS=null;
+  CONJ_START=CURRICULUM.length;
+  if(CONJ) CONJ.tenses.forEach(t=>CURRICULUM.push({unit:"Grammar",title:t.name+" tense",guide:"🔤",color:"var(--purple)",kind:"conj",tenseKey:t.key,lessons:[{name:"Learn",conj:true},{name:"Drill",conj:true}]}));
+  ORDER=buildOrder();
+}
+/* Pedagogical order: interleave vocab+phrases (2:1) and drop conjugation units in early & spread out */
+function buildOrder(){ const V=[],P=[],C=[];
+  CURRICULUM.forEach((u,i)=>{ if(u.kind==="conj")C.push(i); else if(u.kind==="phrase")P.push(i); else V.push(i); });
+  const seq=[]; let vi=0,pi=0; while(vi<V.length||pi<P.length){ if(vi<V.length)seq.push(V[vi++]); if(vi<V.length)seq.push(V[vi++]); if(pi<P.length)seq.push(P[pi++]); }
+  const out=[]; let ci=0; const gap=C.length?Math.max(4,Math.floor(seq.length/(C.length+1))):0; let cnt=0;
+  for(let i=0;i<seq.length;i++){ out.push(seq[i]); cnt++; if(ci<C.length&&(i===1||cnt>=gap)){ out.push(C[ci++]); cnt=0; } }
+  while(ci<C.length) out.push(C[ci++]);
+  return out;
 }
 
 /* ---------- gloss for stories ---------- */
@@ -322,7 +334,7 @@ function buildGloss(){ GLOSS={...GLOSS_EXTRA}; ALL_WORDS.forEach(c=>{ const it=c
 function glossOf(w){ if(!GLOSS) buildGloss(); return GLOSS[w.toLowerCase().replace(/[.,!?;:"]/g,"")]||null; }
 
 /* ---------- state (per language) + prefs (global) ---------- */
-const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{},unitTests:{} };
+const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{},unitTests:{},rush:{} };
 /* ---------- profiles (local accounts) ---------- */
 const PROFILES_KEY="impara_profiles", CUR_PROFILE_KEY="impara_profile";
 const STATE_LANGS=["it","fr","de","ja","ko","hv"];
@@ -364,6 +376,9 @@ function unitGold(u){ const ls=CURRICULUM[u].lessons; return ls.length>0 && ls.e
 function starsFor(acc){ return acc>=100?3:acc>=80?2:1; }
 function starHTML(n){ return "⭐".repeat(n)+"<span class='e'>★</span>".repeat(3-n); }
 function isUnlocked(u,l){ return l===0 || isDone(u,l-1); }
+function unitComplete(u){ return CURRICULUM[u].lessons.every((_,l)=>isDone(u,l)); }
+function orderPosOf(u){ return ORDER.indexOf(u); }
+function unitOpen(u){ const pos=orderPosOf(u); return pos<=0 || unitComplete(ORDER[pos-1]); }
 const SRS_GAPS=[0,4*36e5,24*36e5,3*24*36e5,7*24*36e5,21*24*36e5,60*24*36e5];
 function srsTouch(it,en,c){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en; e.s=c?Math.min(6,e.s+1):Math.max(0,e.s-1); e.due=Date.now()+SRS_GAPS[e.s]; S.srs[it]=e; }
 function dueCount(){ const n=Date.now(); return Object.values(S.srs).filter(e=>e.due<=n).length; }
@@ -399,58 +414,43 @@ function renderHome(){
   const goal=document.createElement("div"); goal.className="goal-card";
   goal.innerHTML=`<div class="ring" style="--p:${pct}"><span>${pct>=100?"🏆":"🔥"}</span></div><div><div class="gt">Daily goal: ${todayXp()} / ${PREFS.dailyGoal} XP</div><div class="gd">${pct>=100?"Completed today — bravo!":"Learning "+LANGMETA.name+" "+LANGMETA.flag}</div></div>`;
   path.appendChild(goal);
-  function renderUnit(ui){
-    const unit=CURRICULUM[ui];
-    const gold=unitGold(ui);
-    const b=document.createElement("div"); b.className="unit-banner"+(gold?" gold":""); if(!gold) b.style.background=unit.color;
+  function renderUnit(ui,locked){
+    const unit=CURRICULUM[ui]; const isConj=unit.kind==="conj"; const gold=unitGold(ui);
+    const b=document.createElement("div"); b.className="unit-banner"+(gold?" gold":"");
+    if(locked) b.style.background="#c9c9c9"; else if(!gold) b.style.background=unit.color;
     const done=unitDone(ui),tot=unit.lessons.length;
-    b.innerHTML=`<div><h2>${unit.unit}${gold?" ✨":""}</h2><h1>${unit.title}</h1><div class="unit-prog">${gold?"★ Perfected — "+unitStars(ui)+"/"+(tot*3)+" stars":done+"/"+tot+" done · "+unitStars(ui)+"/"+(tot*3)+" ⭐"}${openUnit===ui?" · tap to collapse":""}</div></div><div class="guide">${gold?"👑":unit.guide}</div>`;
-    b.onclick=()=>{ openUnit=(openUnit===ui?-1:ui); renderHome(); };
+    const sub=locked?"🔒 Locked — finish the previous unit":((gold?"★ Perfected — "+unitStars(ui)+"/"+(tot*3)+" stars":done+"/"+tot+" done · "+unitStars(ui)+"/"+(tot*3)+" ⭐")+(openUnit===ui?" · tap to collapse":""));
+    b.innerHTML=`<div><h2>${isConj?"Grammar":unit.unit}${gold?" ✨":""}</h2><h1>${unit.title}</h1><div class="unit-prog">${sub}</div></div><div class="guide">${locked?"🔒":(gold?"👑":unit.guide)}</div>`;
+    b.onclick=locked?(()=>toast("Finish the previous unit to unlock 🔒")):(()=>{ openUnit=(openUnit===ui?-1:ui); renderHome(); });
     path.appendChild(b);
-    if(openUnit!==ui) return;
+    if(locked||openUnit!==ui) return;
     const wrap=document.createElement("div"); wrap.className="path";
     unit.lessons.forEach((les,li)=>{
-      const d=isDone(ui,li),un=isUnlocked(ui,li);
-      const node=document.createElement("div"); node.className="node-wrap"; const st=lessonStars(ui,li);
-      node.innerHTML=`<button class="node ${d?"done":(un?"current":"locked")}">${d?"👑":(un?"⭐":"🔒")}</button><div class="node-label">${les.name}</div><div class="node-stars">${d?starHTML(st):""}</div>`;
+      const d=isDone(ui,li),un=isUnlocked(ui,li),st=lessonStars(ui,li);
+      const node=document.createElement("div"); node.className="node-wrap";
+      const icon=d?"👑":(un?(isConj?"🔤":"⭐"):"🔒");
+      node.innerHTML=`<button class="node ${isConj?'conj ':''}${d?"done":(un?"current":"locked")}">${icon}</button><div class="node-label">${les.name}</div><div class="node-stars">${d?starHTML(st):""}</div>`;
       node.querySelector("button").onclick=(un||d)?(()=>startLesson(ui,li)):(()=>toast("Finish the previous set first 🔒"));
       node.style.marginLeft=(li%2?"60px":"-60px"); wrap.appendChild(node);
     });
-    // end-of-unit written test
-    const allDone=done===tot, passed=!!S.unitTests[ui];
-    const tn=document.createElement("div"); tn.className="node-wrap";
-    tn.innerHTML=`<button class="node" style="background:${passed?'var(--gold)':(allDone?'var(--red)':'#c9c9c9')};box-shadow:0 6px 0 ${passed?'#e0a800':(allDone?'var(--red-dark)':'#b0b0b0')}">${passed?'🏆':'📝'}</button><div class="node-label">Unit Test${allDone?"":" 🔒"}</div>`;
-    tn.querySelector("button").onclick=allDone?(()=>startUnitTest(ui)):(()=>toast("Finish all sets in this unit first 📝"));
-    tn.style.marginLeft=(tot%2?"60px":"-60px"); wrap.appendChild(tn);
+    if(!isConj){ const allDone=done===tot, passed=!!S.unitTests[ui];
+      const tn=document.createElement("div"); tn.className="node-wrap";
+      tn.innerHTML=`<button class="node" style="background:${passed?'var(--gold)':(allDone?'var(--red)':'#c9c9c9')};box-shadow:0 6px 0 ${passed?'#e0a800':(allDone?'var(--red-dark)':'#b0b0b0')}">${passed?'🏆':'📝'}</button><div class="node-label">Unit Test${allDone?"":" 🔒"}</div>`;
+      tn.querySelector("button").onclick=allDone?(()=>startUnitTest(ui)):(()=>toast("Finish all sets in this unit first 📝"));
+      tn.style.marginLeft=(tot%2?"60px":"-60px"); wrap.appendChild(tn);
+    }
     path.appendChild(wrap);
   }
-  function renderCheckpoint(g){ const [s,e]=checkpointRange(g); const done=!!S.checkpoints[g];
-    const allSetsDone=(()=>{ for(let u=s;u<=e;u++){ if(unitDone(u)<CURRICULUM[u].lessons.length) return false; } return true; })();
-    const wrap=document.createElement("div"); wrap.className="path";
-    const node=document.createElement("div"); node.className="node-wrap";
-    node.innerHTML=`<button class="node" style="background:${done?'var(--gold)':'var(--blue)'};box-shadow:0 6px 0 ${done?'#e0a800':'var(--blue-dark)'}">🏁</button><div class="node-label">Checkpoint · Units ${s+1}–${e+1}${allSetsDone?"":" (review)"}</div>`;
-    node.querySelector("button").onclick=()=>startCheckpoint(g); wrap.appendChild(node); path.appendChild(wrap); }
-  const h1=document.createElement("div"); h1.className="section-head"; h1.innerHTML=`<div class="line"></div>📖 Words<div class="line"></div>`; path.appendChild(h1);
-  for(let i=0;i<PHRASE_START;i++){ renderUnit(i); if((i+1)%5===0||i===PHRASE_START-1) renderCheckpoint(Math.floor(i/5)); }
-  const h2=document.createElement("div"); h2.className="section-head"; h2.innerHTML=`<div class="line"></div>💬 Phrases<div class="line"></div>`; path.appendChild(h2);
-  for(let i=PHRASE_START;i<CURRICULUM.length;i++) renderUnit(i);
-  if(CONJ){
-    const h3=document.createElement("div"); h3.className="section-head"; h3.innerHTML=`<div class="line"></div>🏛️ Grammar · Conjugation<div class="line"></div>`; path.appendChild(h3);
-    const cb=document.createElement("div"); cb.className="unit-banner"; cb.style.background="var(--purple)";
-    cb.innerHTML=`<div><h2>${CONJ.verbs.length} verbs · ${CONJ.tenses.length} tenses</h2><h1>Verb Conjugation</h1><div class="unit-prog">${openUnit==="conj"?"tap to collapse":"learn each tense, then the mixed gym"}</div></div><div class="guide">🔤</div>`;
-    cb.onclick=()=>{ openUnit=(openUnit==="conj"?-1:"conj"); renderHome(); };
-    path.appendChild(cb);
-    if(openUnit==="conj"){
-      const wrap=document.createElement("div"); wrap.className="path";
-      CONJ.tenses.forEach((t,ti)=>{ const node=document.createElement("div"); node.className="node-wrap";
-        node.innerHTML=`<button class="node conj">🔤</button><div class="node-label">${t.name}</div>`;
-        node.querySelector("button").onclick=()=>startConjLesson(t.key); node.style.marginLeft=(ti%2?"60px":"-60px"); wrap.appendChild(node); });
-      const gym=document.createElement("div"); gym.className="node-wrap";
-      gym.innerHTML=`<button class="node" style="background:var(--gold);box-shadow:0 6px 0 #e0a800">🏋️</button><div class="node-label">Mixed gym</div>`;
-      gym.querySelector("button").onclick=startConjugation; gym.style.marginLeft=(CONJ.tenses.length%2?"60px":"-60px"); wrap.appendChild(gym);
-      path.appendChild(wrap);
+  function reviewNode(emoji,label,sub,bg,sh,fn){ const wrap=document.createElement("div"); wrap.className="path"; const node=document.createElement("div"); node.className="node-wrap";
+    node.innerHTML=`<button class="node" style="background:${bg};box-shadow:0 6px 0 ${sh}">${emoji}</button><div class="node-label">${label}</div><div class="node-stars">${sub||""}</div>`;
+    node.querySelector("button").onclick=fn; wrap.appendChild(node); path.appendChild(wrap); }
+  const head=document.createElement("div"); head.className="section-head"; head.innerHTML=`<div class="line"></div>🗺️ Learning Path<div class="line"></div>`; path.appendChild(head);
+  ORDER.forEach((ui,pos)=>{ const locked=!unitOpen(ui); renderUnit(ui,locked);
+    if(!locked){
+      if((pos+1)%3===0) reviewNode("⚡","Lightning Review · "+RUSH_SECONDS+"s",((S.rush&&S.rush["L"+pos])?"best "+S.rush["L"+pos]:""),"var(--gold)","#e0a800",()=>startRush("L"+pos));
+      if((pos+1)%6===0) reviewNode("🏁","Checkpoint review","",(S.checkpoints&&S.checkpoints["C"+pos])?"var(--gold)":"var(--blue)",(S.checkpoints&&S.checkpoints["C"+pos])?"#e0a800":"var(--blue-dark)",()=>startCheckpoint("C"+pos));
     }
-  }
+  });
   refreshBadges();
 }
 
@@ -477,7 +477,9 @@ function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",ge
 
 function makeFlash(card){ const [it,en,read]=card; return {type:"flash",qtype:"New",label:"Learn this word",native:it,read:read||"",en,speak:it}; }
 function buildQueue(unit,lesson){
-  const les=CURRICULUM[unit].lessons[lesson]; const latin=LANGMETA.latin; const teach=[],quiz=[];
+  const U=CURRICULUM[unit];
+  if(U.kind==="conj"){ const t=CONJ.tenses.find(x=>x.key===U.tenseKey); const q=[]; if(lesson===0) q.push(makeConjIntro(t)); const n=lesson===0?8:12; for(let i=0;i<n;i++) q.push(makeConj(U.tenseKey)); return q; }
+  const les=U.lessons[lesson]; const latin=LANGMETA.latin; const teach=[],quiz=[];
   if(les.cards){ const pool=ALL_WORDS;
     les.cards.forEach(c=>teach.push(makeFlash(c)));                       // 1) learn each word first
     les.cards.forEach(c=>quiz.push(makeMC(c,pool,"it2en")));
@@ -495,18 +497,45 @@ function buildQueue(unit,lesson){
   return teach.concat(shuffle(quiz));                                     // teach in order, then quiz shuffled
 }
 /* checkpoints: cumulative review over a group of 5 vocab units */
-function checkpointRange(g){ const start=g*5,end=Math.min(start+4,PHRASE_START-1); return [start,end]; }
-function checkpointCards(g){ const [s,e]=checkpointRange(g); let cards=[]; for(let u=s;u<=e;u++) CURRICULUM[u].lessons.forEach(l=>cards.push(...(l.cards||[]))); return cards; }
-function startCheckpoint(g){ const cards=checkpointCards(g); if(cards.length<4){ toast("Finish some sets in this section first 🏁"); return; }
-  const pick=shuffle(cards).slice(0,14); const q=pick.map(c=>{ const r=Math.random(); return r<0.34?makeMC(c,ALL_WORDS,"it2en"):(r<0.67?makeMC(c,ALL_WORDS,"en2it"):makeListen(c,ALL_WORDS)); });
+function startCheckpoint(tag){ const cards=rushPool(); if(cards.length<4){ toast("Finish some sets first 🏁"); return; }
+  const pick=shuffle(cards).slice(0,16); const q=pick.map(c=>{ const r=Math.random(); return r<0.34?makeMC(c,ALL_WORDS,"it2en"):(r<0.67?makeMC(c,ALL_WORDS,"en2it"):makeListen(c,ALL_WORDS)); });
   q.push(makeMatch(shuffle(cards).slice(0,5)));
-  L={queue:shuffle(q),i:0,correct:0,mistakes:0,wrongQ:[],mode:"checkpoint",cp:g}; show("lesson"); renderQuestion(); }
+  L={queue:shuffle(q),i:0,correct:0,mistakes:0,wrongQ:[],mode:"checkpoint",cp:tag}; show("lesson"); renderQuestion(); }
 function startConjLesson(tk){ if(!CONJ) return; const t=CONJ.tenses.find(x=>x.key===tk); if(!t) return; const q=[makeConjIntro(t)]; for(let i=0;i<10;i++) q.push(makeConj(tk)); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
 function unitItems(ui){ let items=[]; CURRICULUM[ui].lessons.forEach(l=>items.push(...(l.cards||l.phrases))); return items; }
 function startUnitTest(ui){ const items=unitItems(ui); if(items.length<2){ toast("Finish the sets first 📝"); return; }
   let q; if(LANGMETA.latin){ q=shuffle(items).map(makeType); }
   else { q=shuffle(items).flatMap(c=>[makeListen(c,ALL_CARDS),makeBank(c)]); q=shuffle(q).slice(0,Math.max(8,items.length)); }
   L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"unittest",ut:ui}; show("lesson"); renderQuestion(); }
+
+/* ---------- TIMED LIGHTNING REVIEW ---------- */
+const RUSH_SECONDS=45;
+function rushPool(){ const done=Object.keys(S.completed).map(k=>k.split("-").map(Number)); let cards=[]; (done.length?done:[[0,0]]).forEach(([u,l])=>{ if(CURRICULUM[u]&&CURRICULUM[u].lessons[l]) cards.push(...(CURRICULUM[u].lessons[l].cards||CURRICULUM[u].lessons[l].phrases||[])); }); return cards; }
+function startRush(tag){ const cards=rushPool(); if(cards.length<4){ toast("Finish a few sets first ⚡"); return; }
+  L={mode:"rush",cards:shuffle(cards),ci:0,correct:0,total:0,tag:tag,busy:false,timerId:null}; L.endsAt=Date.now()+RUSH_SECONDS*1000; show("lesson"); L.timerId=setInterval(rushTick,200); renderRush(); }
+function rushTick(){ const ms=L.endsAt-Date.now(); const num=document.getElementById("rushNum"),bar=document.getElementById("rushBar"); if(num)num.textContent=Math.max(0,Math.ceil(ms/1000))+"s"; if(bar)bar.style.width=Math.max(0,ms/(RUSH_SECONDS*1000)*100)+"%"; if(ms<=0) finishRush(); }
+function nextRushCard(){ if(L.ci>=L.cards.length){ L.cards=shuffle(L.cards); L.ci=0; } return L.cards[L.ci++]; }
+function renderRush(){ if(Date.now()>=L.endsAt) return finishRush(); const card=nextRushCard();
+  const q=(Math.random()<.3)?makeListen(card,ALL_CARDS):makeMC(card,ALL_CARDS,Math.random()<.5?"it2en":"en2it");
+  const el=document.getElementById("lesson");
+  el.innerHTML=`<div class="progress-row"><button class="close" id="closeBtn">✕</button><div class="bar"><div id="rushBar" style="background:var(--gold);width:${Math.max(0,(L.endsAt-Date.now())/(RUSH_SECONDS*1000)*100)}%"></div></div><div class="counter" id="rushNum">${Math.max(0,Math.ceil((L.endsAt-Date.now())/1000))}s</div></div>
+    <div class="q-type">⚡ Lightning · ${L.correct} correct</div><div class="q-title">${q.label}</div><div id="qbody"></div>`;
+  document.getElementById("closeBtn").onclick=()=>{ clearInterval(L.timerId); if(confirm("Quit the lightning round?")) goHome(); else { L.endsAt=Date.now()+ (L.endsAt-Date.now()); L.timerId=setInterval(rushTick,200); } };
+  const body=document.getElementById("qbody");
+  const head=q.listen?audioControls(q,false):((q.speak?audioControls(q,false):"")+`<div class="phrase">${q.prompt}</div>${q.read?`<div class="reading">${q.read}</div>`:""}`);
+  body.innerHTML=`${head}<div class="choices"></div>`; if(q.speak){ wireAudio(q); if(q.listen) speak(q.speak); }
+  const wrap=body.querySelector(".choices");
+  q.options.forEach((opt,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`<span class="num">${i+1}</span>${opt}`;
+    b.onclick=()=>{ if(L.busy) return; L.busy=true; const ok=opt===q.answer; L.total++; if(ok)L.correct++; if(q.term)srsTouch(q.term,q.termEn||"",ok); sfx(ok?"correct":"wrong");
+      [...wrap.children].forEach(c=>{ const t=c.textContent.replace(/^\d/,"").trim(); if(t===q.answer)c.classList.add("right"); else if(t===opt)c.classList.add("wrong"); c.style.pointerEvents="none"; });
+      setTimeout(()=>{ L.busy=false; if(Date.now()<L.endsAt) renderRush(); else finishRush(); }, ok?250:600); };
+    wrap.appendChild(b); });
+}
+function finishRush(){ if(!L||L._done) return; L._done=true; clearInterval(L.timerId); const c=L.correct; bumpStreak(); const gained=c*3; if(gained){ S.xp+=gained; addTodayXp(gained); } S.gems+=Math.floor(c/2);
+  if(L.tag!=null){ S.rush=S.rush||{}; S.rush[L.tag]=Math.max(S.rush[L.tag]||0,c); } save();
+  const best=L.tag!=null?S.rush[L.tag]:c;
+  document.getElementById("lesson").innerHTML=`<div class="center-screen"><div class="big">⚡</div><h1 style="color:var(--gold)">Lightning round!</h1><div style="font-size:52px;font-weight:800;color:var(--gold)">${c}</div><p>correct in ${RUSH_SECONDS} seconds${best>c?" · best "+best:(c>0&&c>=best?" · new best!":"")}</p><div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${gained}</div></div></div><button class="btn" style="max-width:280px" id="doneBtn">Continue</button></div>`;
+  sfx("complete"); if(c>=8) confetti(); document.getElementById("doneBtn").onclick=goHome; }
 
 /* ---------- SESSION ---------- */
 let L=null;
@@ -665,7 +694,7 @@ function completeSession(){
   document.getElementById("lesson").innerHTML=`<div class="center-screen">${html}${goalHit?'<p style="color:var(--gold);font-weight:800">🏆 Daily goal reached!</p>':''}<button class="btn" style="max-width:280px" id="doneBtn">Continue</button></div>`;
   sfx("complete"); confetti(); document.getElementById("doneBtn").onclick=goHome;
 }
-function goHome(){ stopRec(); if(window.speechSynthesis) speechSynthesis.cancel(); show("home"); document.querySelector("#home main").innerHTML='<div id="path"></div>'; renderHome(); setNav("home"); }
+function goHome(){ stopRec(); if(L&&L.timerId) clearInterval(L.timerId); if(window.speechSynthesis) speechSynthesis.cancel(); show("home"); document.querySelector("#home main").innerHTML='<div id="path"></div>'; renderHome(); setNav("home"); }
 
 /* ---------- TRAIN ---------- */
 function showTrain(){ show("home"); const due=dueCount(); const it=currentLang==="it"; const cj=!!CONJ;
@@ -678,8 +707,9 @@ function showTrain(){ show("home"); const due=dueCount(); const it=currentLang==
     ${it?`<button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Noun gender &amp; articles</span></span></button>`:""}
     <button class="menu-card" id="m-num"><span class="mi">🔢</span><span><span class="mt">Numbers</span><span class="md">Listen and type numbers 0–100</span></span></button>
     <button class="menu-card" id="m-hard"><span class="mi">🧠</span><span><span class="mt">Hardest Words</span><span class="md">Targets your weakest vocabulary</span></span></button>
+    <button class="menu-card" id="m-rush"><span class="mi">⚡</span><span><span class="mt">Lightning Review</span><span class="md">${RUSH_SECONDS}s timed rush over past units — go fast!</span></span></button>
     <button class="menu-card" id="m-rev"><span class="mi">🔁</span><span><span class="mt">Spaced Review</span><span class="md">Words due for revision</span></span>${due?`<span class="badge">${due}</span>`:""}</button>`;
-  const map={ "m-prac":startPractice,"m-speak":startSpeaking,"m-dict":startDictation,"m-conj":startConjugation,"m-gen":startGender,"m-num":startNumbers,"m-hard":startHardest,"m-rev":startReview };
+  const map={ "m-prac":startPractice,"m-speak":startSpeaking,"m-dict":startDictation,"m-conj":startConjugation,"m-gen":startGender,"m-num":startNumbers,"m-hard":startHardest,"m-rush":()=>startRush(null),"m-rev":startReview };
   Object.entries(map).forEach(([id,fn])=>{ const el=document.getElementById(id); if(el) el.onclick=fn; });
 }
 
