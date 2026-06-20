@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#58cc02" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -22,8 +22,8 @@
   }
   [data-theme="dark"]{ --bg:#131f24; --bg2:#1b2c34; --ink:#f1f1f1; --muted:#7b8b93; --border:#37464f; --card:#1b2c34; }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html{overflow-x:hidden}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;width:100%;max-width:100vw;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  html,body{overflow-x:hidden;width:100%}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
   .phrase,.q-title,.reading,.ctx,.choice,.tile,.dict-row,.menu-card,.unit-banner h1{overflow-wrap:anywhere;word-break:break-word}
   #ctbl{overflow-x:auto}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -566,18 +566,20 @@ function renderSpeak(q,body){
   const skipB=document.getElementById("skipBtn"); if(skipB) skipB.onclick=()=>evalSpeak(false,q);
   const saidB=document.getElementById("saidBtn"); if(saidB) saidB.onclick=()=>evalSpeak(true,q);
   const mic=document.getElementById("mic"),hint=document.getElementById("micHint"); const myIdx=L.i;
-  mic.onclick=()=>{ speak(q.speak); if(!supported){ toast("Open the online site in Chrome/Edge for voice input"); return; }
+  mic.onclick=()=>{ const foot=document.getElementById("foot"); if(foot&&foot.classList.contains("show-result")){ speak(q.speak); return; }
+    speak(q.speak); if(!supported){ toast("Open the online site in Chrome/Edge for voice input"); return; }
     stopRec(); let rec; try{ rec=new SR(); }catch(e){ toast("Speech input unavailable here"); return; } _activeRec=rec;
     rec.lang=LANGMETA.tts; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=false;
-    let got=false; mic.classList.add("live"); hint.textContent="Listening… speak now";
+    let done=false,last=""; const target=speakNorm(q.answer); mic.classList.add("live"); hint.textContent="Listening… speak now";
+    const grade=text=>{ if(done||L.i!==myIdx) return; done=true; _activeRec=null; mic.classList.remove("live");
+      const sc=simScore(speakNorm(text),target); const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.innerHTML=`You said: <b>${text}</b> · ${Math.round(sc*100)}% match`; }
+      evalSpeak(sc>=0.6,q); };
     rec.onresult=e=>{ if(L.i!==myIdx) return; const res=e.results[e.results.length-1]; const alts=[...res].map(r=>r.transcript);
-      if(!res.isFinal){ const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.textContent="… "+alts[0]; } return; }
-      got=true; const target=speakNorm(q.answer); let best=0,heard=alts[0]; alts.forEach(a=>{ const sc=simScore(speakNorm(a),target); if(sc>best){ best=sc; heard=a; } });
-      mic.classList.remove("live"); _activeRec=null; const ok=best>=0.67;
-      const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.innerHTML=`You said: <b>${heard}</b> · ${Math.round(best*100)}% match`; }
-      evalSpeak(ok,q); };
+      let bA=alts[0],bS=-1; alts.forEach(a=>{ const s=simScore(speakNorm(a),target); if(s>bS){ bS=s; bA=a; } }); last=bA;
+      const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.textContent=(res.isFinal?"":"… ")+bA; }
+      if(res.isFinal) grade(bA); };
     rec.onerror=ev=>{ if(L.i!==myIdx) return; mic.classList.remove("live"); hint.textContent = ev.error==="not-allowed"?"Microphone blocked — allow mic access in your browser":(ev.error==="no-speech"?"Didn't hear anything — tap to retry":"Tap to retry"); };
-    rec.onend=()=>{ mic.classList.remove("live"); if(_activeRec===rec) _activeRec=null; if(!got&&L.i===myIdx&&hint.textContent.startsWith("Listening")) hint.textContent="Didn't catch that — tap to retry"; };
+    rec.onend=()=>{ mic.classList.remove("live"); if(_activeRec===rec) _activeRec=null; if(!done&&L.i===myIdx){ if(last) grade(last); else if(hint.textContent.startsWith("Listening")) hint.textContent="Didn't catch that — tap to retry"; } };
     try{ rec.start(); }catch(e){ mic.classList.remove("live"); } };
 }
 function evalSpeak(right,q){ stopRec(); const foot=document.getElementById("foot"); if(!foot||foot.classList.contains("show-result")) return;
