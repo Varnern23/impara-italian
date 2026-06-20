@@ -51,7 +51,7 @@ LANG_EXTRA.fr = {
 LANG_EXTRA.de = {
  code:"de", name:"German", flag:"🇩🇪", tts:"de-DE", latin:true,
  conj:{ pronouns:["ich","du","er/sie/es","wir","ihr","sie/Sie"],
-  tenses:[{key:"praes",name:"Präsens"},{key:"perf",name:"Perfekt"},{key:"praet",name:"Präteritum"}],
+  tenses:[{key:"praes",name:"Präsens",note:"Present — also used for the near future. Regular endings: -e, -st, -t, -en, -t, -en."},{key:"perf",name:"Perfekt",note:"The spoken past ('I have done'). haben or sein (present) + past participle (ge-…-t / ge-…-en). Movement verbs use sein."},{key:"praet",name:"Präteritum",note:"The written/narrative past. Common in writing and with sein/haben (war, hatte) in speech."}],
   verbs:[
    {inf:"sein",en:"to be",forms:{praes:["bin","bist","ist","sind","seid","sind"],perf:["bin gewesen","bist gewesen","ist gewesen","sind gewesen","seid gewesen","sind gewesen"],praet:["war","warst","war","waren","wart","waren"]}},
    {inf:"haben",en:"to have",forms:{praes:["habe","hast","hat","haben","habt","haben"],perf:["habe gehabt","hast gehabt","hat gehabt","haben gehabt","habt gehabt","haben gehabt"],praet:["hatte","hattest","hatte","hatten","hattet","hatten"]}},

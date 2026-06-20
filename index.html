@@ -59,7 +59,13 @@
   .node.current{background:var(--green);box-shadow:0 6px 0 var(--green-shadow)}
   .node.locked{background:#c9c9c9;box-shadow:0 6px 0 #b0b0b0}
   .node.conj{background:var(--purple);box-shadow:0 6px 0 var(--purple-dark)}
-  .node-label{font-size:11px;color:var(--muted);font-weight:700;margin:3px 0 8px;max-width:150px;text-align:center}
+  .node-label{font-size:11px;color:var(--muted);font-weight:700;margin:3px 0 2px;max-width:150px;text-align:center}
+  .node-stars{font-size:11px;letter-spacing:1px;margin-bottom:8px;height:14px}
+  .node-stars .e{opacity:.25}
+  @keyframes shimmer{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
+  .unit-banner.gold{background:linear-gradient(100deg,#ffd54a,#ffb300,#ff9800,#ffd54a)!important;background-size:200% 100%;color:#5a3d00;animation:shimmer 2.5s ease-in-out infinite;box-shadow:0 4px 14px rgba(255,170,0,.45)}
+  .unit-banner.gold h2,.unit-banner.gold .unit-prog{color:#7a5200;opacity:.85}
+  .unit-banner.gold .guide{background:rgba(255,255,255,.35)}
 
   #lesson{width:100%;max-width:640px;padding:14px 20px;display:flex;flex-direction:column;min-height:100vh}
   .progress-row{display:flex;align-items:center;gap:14px;margin-bottom:26px}
@@ -258,7 +264,13 @@ const GRAMMAR_IT=[
 
 /* ---------- conjugation (Italian-only gym) ---------- */
 const PRONOUNS=["io","tu","lui/lei","noi","voi","loro"];
-const TENSES=[{key:"present",name:"Present"},{key:"passato",name:"Passato prossimo"},{key:"imperfetto",name:"Imperfetto"},{key:"futuro",name:"Future"},{key:"condizionale",name:"Conditional"}];
+const TENSES=[
+  {key:"present",name:"Present",note:"What happens now or regularly. Drop -are/-ere/-ire and add the endings (o, i, a/e, iamo, ate/ete/ite, ano/ono)."},
+  {key:"passato",name:"Passato prossimo",note:"The everyday past ('I ate'). Use avere or essere (present) + the past participle (-ato/-uto/-ito). Movement/change verbs use essere and agree."},
+  {key:"imperfetto",name:"Imperfetto",note:"Ongoing or habitual past — 'was doing', 'used to'. Very regular endings (-avo, -evo, -ivo …). Key irregular: ero."},
+  {key:"futuro",name:"Future",note:"What will happen. Same stem for every verb, endings -ò, -ai, -à, -emo, -ete, -anno."},
+  {key:"condizionale",name:"Conditional",note:"'Would' — polite requests and hypotheticals. Endings -ei, -esti, -ebbe, -emmo, -este, -ebbero. Gold: vorrei, potrei, dovrei."},
+];
 const AUX={ avere:["ho","hai","ha","abbiamo","avete","hanno"], essere:["sono","sei","è","siamo","siete","sono"] };
 const REG_PRES={are:["o","i","a","iamo","ate","ano"],ere:["o","i","e","iamo","ete","ono"],ire:["o","i","e","iamo","ite","ono"],isc:["isco","isci","isce","iamo","ite","iscono"]};
 const REG_IMP={are:["avo","avi","ava","avamo","avate","avano"],ere:["evo","evi","eva","evamo","evate","evano"],ire:["ivo","ivi","iva","ivamo","ivate","ivano"]};
@@ -310,7 +322,7 @@ function buildGloss(){ GLOSS={...GLOSS_EXTRA}; ALL_WORDS.forEach(c=>{ const it=c
 function glossOf(w){ if(!GLOSS) buildGloss(); return GLOSS[w.toLowerCase().replace(/[.,!?;:"]/g,"")]||null; }
 
 /* ---------- state (per language) + prefs (global) ---------- */
-const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{} };
+const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{},unitTests:{} };
 /* ---------- profiles (local accounts) ---------- */
 const PROFILES_KEY="impara_profiles", CUR_PROFILE_KEY="impara_profile";
 const STATE_LANGS=["it","fr","de","ja","ko","hv"];
@@ -346,6 +358,11 @@ function isDone(u,l){ return !!S.completed[lessonId(u,l)]; }
 function totalLessons(){ return CURRICULUM.reduce((a,u)=>a+u.lessons.length,0); }
 function doneCount(){ return Object.keys(S.completed).length; }
 function unitDone(u){ return CURRICULUM[u].lessons.filter((_,l)=>isDone(u,l)).length; }
+function lessonStars(u,l){ const v=S.completed[lessonId(u,l)]; return typeof v==="number"?v:(v?1:0); }
+function unitStars(u){ return CURRICULUM[u].lessons.reduce((a,_,l)=>a+lessonStars(u,l),0); }
+function unitGold(u){ const ls=CURRICULUM[u].lessons; return ls.length>0 && ls.every((_,l)=>lessonStars(u,l)===3); }
+function starsFor(acc){ return acc>=100?3:acc>=80?2:1; }
+function starHTML(n){ return "⭐".repeat(n)+"<span class='e'>★</span>".repeat(3-n); }
 function isUnlocked(u,l){ return l===0 || isDone(u,l-1); }
 const SRS_GAPS=[0,4*36e5,24*36e5,3*24*36e5,7*24*36e5,21*24*36e5,60*24*36e5];
 function srsTouch(it,en,c){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en; e.s=c?Math.min(6,e.s+1):Math.max(0,e.s-1); e.due=Date.now()+SRS_GAPS[e.s]; S.srs[it]=e; }
@@ -384,20 +401,27 @@ function renderHome(){
   path.appendChild(goal);
   function renderUnit(ui){
     const unit=CURRICULUM[ui];
-    const b=document.createElement("div"); b.className="unit-banner"; b.style.background=unit.color;
+    const gold=unitGold(ui);
+    const b=document.createElement("div"); b.className="unit-banner"+(gold?" gold":""); if(!gold) b.style.background=unit.color;
     const done=unitDone(ui),tot=unit.lessons.length;
-    b.innerHTML=`<div><h2>${unit.unit}</h2><h1>${unit.title}</h1><div class="unit-prog">${done}/${tot} done${openUnit===ui?" · tap to collapse":""}</div></div><div class="guide">${unit.guide}</div>`;
+    b.innerHTML=`<div><h2>${unit.unit}${gold?" ✨":""}</h2><h1>${unit.title}</h1><div class="unit-prog">${gold?"★ Perfected — "+unitStars(ui)+"/"+(tot*3)+" stars":done+"/"+tot+" done · "+unitStars(ui)+"/"+(tot*3)+" ⭐"}${openUnit===ui?" · tap to collapse":""}</div></div><div class="guide">${gold?"👑":unit.guide}</div>`;
     b.onclick=()=>{ openUnit=(openUnit===ui?-1:ui); renderHome(); };
     path.appendChild(b);
     if(openUnit!==ui) return;
     const wrap=document.createElement("div"); wrap.className="path";
     unit.lessons.forEach((les,li)=>{
       const d=isDone(ui,li),un=isUnlocked(ui,li);
-      const node=document.createElement("div"); node.className="node-wrap";
-      node.innerHTML=`<button class="node ${d?"done":(un?"current":"locked")}">${d?"👑":(un?"⭐":"🔒")}</button><div class="node-label">${les.name}</div>`;
+      const node=document.createElement("div"); node.className="node-wrap"; const st=lessonStars(ui,li);
+      node.innerHTML=`<button class="node ${d?"done":(un?"current":"locked")}">${d?"👑":(un?"⭐":"🔒")}</button><div class="node-label">${les.name}</div><div class="node-stars">${d?starHTML(st):""}</div>`;
       node.querySelector("button").onclick=(un||d)?(()=>startLesson(ui,li)):(()=>toast("Finish the previous set first 🔒"));
       node.style.marginLeft=(li%2?"60px":"-60px"); wrap.appendChild(node);
     });
+    // end-of-unit written test
+    const allDone=done===tot, passed=!!S.unitTests[ui];
+    const tn=document.createElement("div"); tn.className="node-wrap";
+    tn.innerHTML=`<button class="node" style="background:${passed?'var(--gold)':(allDone?'var(--red)':'#c9c9c9')};box-shadow:0 6px 0 ${passed?'#e0a800':(allDone?'var(--red-dark)':'#b0b0b0')}">${passed?'🏆':'📝'}</button><div class="node-label">Unit Test${allDone?"":" 🔒"}</div>`;
+    tn.querySelector("button").onclick=allDone?(()=>startUnitTest(ui)):(()=>toast("Finish all sets in this unit first 📝"));
+    tn.style.marginLeft=(tot%2?"60px":"-60px"); wrap.appendChild(tn);
     path.appendChild(wrap);
   }
   function renderCheckpoint(g){ const [s,e]=checkpointRange(g); const done=!!S.checkpoints[g];
@@ -411,10 +435,21 @@ function renderHome(){
   const h2=document.createElement("div"); h2.className="section-head"; h2.innerHTML=`<div class="line"></div>💬 Phrases<div class="line"></div>`; path.appendChild(h2);
   for(let i=PHRASE_START;i<CURRICULUM.length;i++) renderUnit(i);
   if(CONJ){
-    const h3=document.createElement("div"); h3.className="section-head"; h3.innerHTML=`<div class="line"></div>🏛️ Grammar<div class="line"></div>`; path.appendChild(h3);
+    const h3=document.createElement("div"); h3.className="section-head"; h3.innerHTML=`<div class="line"></div>🏛️ Grammar · Conjugation<div class="line"></div>`; path.appendChild(h3);
     const cb=document.createElement("div"); cb.className="unit-banner"; cb.style.background="var(--purple)";
-    cb.innerHTML=`<div><h2>Grammar Gym</h2><h1>Verb Conjugation</h1><div class="unit-prog">${CONJ.tenses.length} tenses · ${CONJ.verbs.length} verbs</div></div><div class="guide">🔤</div>`;
-    cb.onclick=startConjugation; path.appendChild(cb);
+    cb.innerHTML=`<div><h2>${CONJ.verbs.length} verbs · ${CONJ.tenses.length} tenses</h2><h1>Verb Conjugation</h1><div class="unit-prog">${openUnit==="conj"?"tap to collapse":"learn each tense, then the mixed gym"}</div></div><div class="guide">🔤</div>`;
+    cb.onclick=()=>{ openUnit=(openUnit==="conj"?-1:"conj"); renderHome(); };
+    path.appendChild(cb);
+    if(openUnit==="conj"){
+      const wrap=document.createElement("div"); wrap.className="path";
+      CONJ.tenses.forEach((t,ti)=>{ const node=document.createElement("div"); node.className="node-wrap";
+        node.innerHTML=`<button class="node conj">🔤</button><div class="node-label">${t.name}</div>`;
+        node.querySelector("button").onclick=()=>startConjLesson(t.key); node.style.marginLeft=(ti%2?"60px":"-60px"); wrap.appendChild(node); });
+      const gym=document.createElement("div"); gym.className="node-wrap";
+      gym.innerHTML=`<button class="node" style="background:var(--gold);box-shadow:0 6px 0 #e0a800">🏋️</button><div class="node-label">Mixed gym</div>`;
+      gym.querySelector("button").onclick=startConjugation; gym.style.marginLeft=(CONJ.tenses.length%2?"60px":"-60px"); wrap.appendChild(gym);
+      path.appendChild(wrap);
+    }
   }
   refreshBadges();
 }
@@ -431,11 +466,12 @@ function makeMatch(cards){ return {type:"match",qtype:"Match the pairs",pairs:ca
 function makeDictation(sent){ const [it,en]=sent; return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:en,speak:it,answer:it,label:"Listen and type what you hear",term:it,termEn:en}; }
 function makeSpeak(card){ const [it,en,read]=card; return {type:"speak",qtype:"Speaking",prompt:it,read:read||"",en,speak:it,answer:it,label:"Say this out loud",term:it,termEn:en}; }
 function makeNumber(){ const n=Math.floor(Math.random()*101); return {type:"type",qtype:"Numbers",prompt:null,dictation:true,hint:"type the number you hear (digits)",speak:String(n),answer:String(n),term:"num·"+n,termEn:String(n)}; }
-function makeConj(){ const VB=CONJ.verbs,TS=CONJ.tenses,PR=CONJ.pronouns;
-  const v=VB[Math.floor(Math.random()*VB.length)],t=TS[Math.floor(Math.random()*TS.length)],idx=Math.floor(Math.random()*PR.length);
+function makeConj(fixedKey){ const VB=CONJ.verbs,TS=CONJ.tenses,PR=CONJ.pronouns;
+  const v=VB[Math.floor(Math.random()*VB.length)],t=fixedKey?TS.find(x=>x.key===fixedKey):TS[Math.floor(Math.random()*TS.length)],idx=Math.floor(Math.random()*PR.length);
   const forms=v.forms[t.key],answer=forms[idx]; const wrong=new Set(); forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
   while(wrong.size<3){ const ov=VB[Math.floor(Math.random()*VB.length)],of=ov.forms[t.key][Math.floor(Math.random()*PR.length)]; if(of!==answer) wrong.add(of); if(wrong.size>20) break; }
   return {type:"mc",qtype:"Conjugation · "+t.name,conj:{pronoun:PR[idx],inf:v.inf,en:v.en,tense:t.name},options:shuffle([answer,...[...wrong].slice(0,3)]),answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PR[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
+function makeConjIntro(t){ const v=CONJ.verbs[0],forms=v.forms[t.key]; const sample=CONJ.pronouns.map((p,i)=>p+" "+forms[i]).join(" · "); return {type:"flash",info:true,qtype:"Grammar",label:"Tense: "+t.name,title:t.name,note:t.note||"",sample:v.inf+" — "+v.en+"<br>"+sample,speak:forms[0]}; }
 function genderItems(){ const out=[]; ALL_WORDS.forEach(c=>{ const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }); return out; }
 function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",gender:{noun:item.noun,en:item.en},options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
 
@@ -465,6 +501,12 @@ function startCheckpoint(g){ const cards=checkpointCards(g); if(cards.length<4){
   const pick=shuffle(cards).slice(0,14); const q=pick.map(c=>{ const r=Math.random(); return r<0.34?makeMC(c,ALL_WORDS,"it2en"):(r<0.67?makeMC(c,ALL_WORDS,"en2it"):makeListen(c,ALL_WORDS)); });
   q.push(makeMatch(shuffle(cards).slice(0,5)));
   L={queue:shuffle(q),i:0,correct:0,mistakes:0,wrongQ:[],mode:"checkpoint",cp:g}; show("lesson"); renderQuestion(); }
+function startConjLesson(tk){ if(!CONJ) return; const t=CONJ.tenses.find(x=>x.key===tk); if(!t) return; const q=[makeConjIntro(t)]; for(let i=0;i<10;i++) q.push(makeConj(tk)); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
+function unitItems(ui){ let items=[]; CURRICULUM[ui].lessons.forEach(l=>items.push(...(l.cards||l.phrases))); return items; }
+function startUnitTest(ui){ const items=unitItems(ui); if(items.length<2){ toast("Finish the sets first 📝"); return; }
+  let q; if(LANGMETA.latin){ q=shuffle(items).map(makeType); }
+  else { q=shuffle(items).flatMap(c=>[makeListen(c,ALL_CARDS),makeBank(c)]); q=shuffle(q).slice(0,Math.max(8,items.length)); }
+  L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"unittest",ut:ui}; show("lesson"); renderQuestion(); }
 
 /* ---------- SESSION ---------- */
 let L=null;
@@ -497,8 +539,9 @@ function renderQuestion(){
   else if(q.type==="flash") renderFlash(q,body);
 }
 function renderFlash(q,body){
-  body.innerHTML=`${audioControls(q,true)}<div class="phrase" style="font-size:30px;margin-bottom:8px">${q.native}</div>${q.read?`<div class="reading">${q.read}</div>`:""}<div class="ctx" style="font-size:20px;color:var(--ink);font-weight:700;margin-top:4px">${q.en}</div><div class="tip" style="margin-top:24px">👀 Learn this one — then you'll be quizzed on it.</div>`;
-  wireAudio(q); speak(q.speak);
+  if(q.info){ body.innerHTML=`${audioControls(q,false)}<div class="phrase" style="font-size:26px;margin-bottom:6px;color:var(--purple)">${q.title}</div><div class="tip" style="font-size:15px;margin-bottom:16px">${q.note}</div><div class="ctx" style="font-size:18px;color:var(--ink);line-height:1.7">${q.sample}</div><div class="tip" style="margin-top:20px">👀 Read this — then you'll be quizzed on it.</div>`; wireAudio(q); if(q.speak) speak(q.speak); }
+  else body.innerHTML=`${audioControls(q,true)}<div class="phrase" style="font-size:30px;margin-bottom:8px">${q.native}</div>${q.read?`<div class="reading">${q.read}</div>`:""}<div class="ctx" style="font-size:20px;color:var(--ink);font-weight:700;margin-top:4px">${q.en}</div><div class="tip" style="margin-top:24px">👀 Learn this one — then you'll be quizzed on it.</div>`;
+  if(!q.info){ wireAudio(q); speak(q.speak); }
   const foot=document.getElementById("foot"); foot.innerHTML=`<button class="btn blue" id="contBtn">Got it 👍</button>`;
   document.getElementById("contBtn").onclick=next;
 }
@@ -592,9 +635,15 @@ let _checkFn=null,_canCheck=null;
 function setCheck(fn,can){ _checkFn=fn; _canCheck=can; const cb=document.getElementById("checkBtn"); if(cb) cb.onclick=doCheck; }
 function enableCheck(){ if(_canCheck&&_canCheck()){ const b=document.getElementById("checkBtn"); if(b) b.disabled=false; } }
 function disableCheck(){ const b=document.getElementById("checkBtn"); if(b) b.disabled=true; }
+function maskHint(ans){ return ans.split(" ").map(w=>[...w].map((ch,i)=>i===0?ch:"_").join(" ")).join("    "); }
 function doCheck(){ const {right,correct}=_checkFn(),q=L.queue[L.i];
-  if(right) L.correct++; else { L.mistakes++; L.wrongQ.push(q); }
-  if(q.term) srsTouch(q.term,q.termEn||"",right); if(right&&q.speak) speak(q.speak); showResult(right,correct); save(); }
+  if(right){ if(q.hintUsed){ L.mistakes++; if(q.term) srsTouch(q.term,q.termEn||"",false); } else { L.correct++; if(q.term) srsTouch(q.term,q.termEn||"",true); } if(q.speak) speak(q.speak); showResult(true,correct); save(); return; }
+  // wrong — for written answers, give a hint after the first miss, reveal after the second
+  if(q.type==="type"){ q.tries=(q.tries||0)+1;
+    if(q.tries===1){ q.hintUsed=true; if(q.speak) speak(q.speak); const foot=document.getElementById("foot"); foot.className="foot show-result incorrect";
+      foot.innerHTML=`<div class="result-msg incorrect">❌ Not quite — hint:<span class="sub" style="letter-spacing:2px">${maskHint(q.answer)}</span></div><button class="btn red" id="retryBtn">Try again</button>`;
+      document.getElementById("retryBtn").onclick=()=>renderQuestion(); save(); return; } }
+  L.mistakes++; if(q.term) srsTouch(q.term,q.termEn||"",false); L.wrongQ.push(q); showResult(false,correct); save(); }
 function showResult(right,correct){ sfx(right?"correct":"wrong"); const foot=document.getElementById("foot"); foot.className="foot show-result "+(right?"correct":"incorrect");
   foot.innerHTML=`<div class="result-msg ${right?'correct':'incorrect'}">${right?"✅ Bravo!":"❌ Correct answer:"}${right?"":`<span class="sub">${correct}</span>`}</div><button class="btn ${right?'':'red'}" id="contBtn">Continue</button>`;
   document.getElementById("contBtn").onclick=next; }
@@ -608,7 +657,8 @@ function completeSession(){
   else if(L.mode==="dictation"||L.mode==="gender"||L.mode==="numbers"){ gained=L.mode==="numbers"?10:15; S.gems+=6; const ico=L.mode==="dictation"?"🎧":(L.mode==="numbers"?"🔢":"⚖️"); html=`<div class="big">${ico}</div><h1 style="color:var(--blue)">Nice work!</h1>`; }
   else if(L.mode==="speaking"){ gained=15; S.gems+=8; html=`<div class="big">🗣️</div><h1 style="color:var(--red)">Speaking done!</h1>`; }
   else if(L.mode==="checkpoint"){ gained=30; S.gems+=15; S.checkpoints[L.cp]=true; html=`<div class="big">🏁</div><h1 style="color:var(--gold)">Checkpoint cleared!</h1>`; }
-  else { gained=15+(L.mistakes===0?5:0); S.gems+=10; S.completed[lessonId(L.unit,L.lesson)]=true; html=`<div class="big">🎉</div><h1>Set complete!</h1>`; }
+  else if(L.mode==="unittest"){ const passed=acc>=80; gained=passed?25:8; S.gems+=12; if(passed) S.unitTests[L.ut]=true; html=`<div class="big">${passed?"📝":"📚"}</div><h1 style="color:${passed?"var(--gold)":"var(--blue)"}">${passed?"Unit test passed!":"Almost — review &amp; retry"}</h1><p>${passed?"You wrote the whole unit from memory. Bravissimo!":"You need 80% to pass. Keep practising the sets and try again."}</p>`; }
+  else { const stars=starsFor(acc); const id=lessonId(L.unit,L.lesson); S.completed[id]=Math.max(lessonStars(L.unit,L.lesson),stars); gained=15+(stars===3?5:0); S.gems+=10; const justGold=unitGold(L.unit); html=`<div class="big">${stars===3?"🌟":"🎉"}</div><h1>${stars===3?"Perfect set!":"Set complete!"}</h1><div style="font-size:46px;letter-spacing:6px">${starHTML(stars)}</div>${justGold?'<p style="color:#ff9800;font-weight:800">✨ Unit perfected — it’s gold now!</p>':''}`; }
   html+=`<div class="reward-row"><div class="reward"><div class="lbl">XP</div><div class="val">+${gained||0}</div></div><div class="reward blue"><div class="lbl">ACCURACY</div><div class="val">${acc}%</div></div></div>`;
   if(gained){ S.xp+=gained; addTodayXp(gained); } save();
   const goalHit=todayXp()>=PREFS.dailyGoal&&todayXp()-gained<PREFS.dailyGoal;

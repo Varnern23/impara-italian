@@ -25,7 +25,7 @@ LANG_EXTRA.fr = {
  ],
  alphabets:null,
  conj:{ pronouns:["je","tu","il/elle","nous","vous","ils/elles"],
-  tenses:[{key:"pres",name:"Présent"},{key:"pc",name:"Passé composé"},{key:"fut",name:"Futur"}],
+  tenses:[{key:"pres",name:"Présent",note:"Current or habitual actions ('I speak / I am speaking'). Regular -er verbs: -e, -es, -e, -ons, -ez, -ent."},{key:"pc",name:"Passé composé",note:"The completed past ('I spoke / I have spoken'). avoir or être (present) + past participle (-é, -i, -u). Movement verbs use être and agree."},{key:"fut",name:"Futur",note:"What will happen ('I will speak'). Add -ai, -as, -a, -ons, -ez, -ont to the infinitive."}],
   verbs:[
    {inf:"être",en:"to be",forms:{pres:["suis","es","est","sommes","êtes","sont"],pc:["ai été","as été","a été","avons été","avez été","ont été"],fut:["serai","seras","sera","serons","serez","seront"]}},
    {inf:"avoir",en:"to have",forms:{pres:["ai","as","a","avons","avez","ont"],pc:["ai eu","as eu","a eu","avons eu","avez eu","ont eu"],fut:["aurai","auras","aura","aurons","aurez","auront"]}},
