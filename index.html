@@ -29,6 +29,7 @@
   body{overflow-x:hidden;width:100%;font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
   h1,h2,.q-title,.unit-banner h1,.center-screen h1,.big{font-family:'Baloo 2','Nunito',system-ui,sans-serif}
   img,canvas,table{max-width:100%}
+  main,#path,#home,.path,.node-wrap{overflow-x:clip;max-width:100%}
   .phrase,.q-title,.reading,.ctx,.choice,.tile,.dict-row,.menu-card,.unit-banner h1{overflow-wrap:anywhere;word-break:break-word}
   #ctbl{overflow-x:auto}
   .chat{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
@@ -216,8 +217,8 @@
   <header>
     <div class="stat flame"><span class="ico">🔥</span><span id="streak">0</span></div>
     <div class="stat gem"><span class="ico">💎</span><span id="gems">0</span></div>
-    <div class="stat xp"><span class="ico">⭐</span><span id="xpStat">0</span></div>
     <div class="spacer"></div>
+    <button class="theme-btn" id="shopBtn" title="Shop">🛒</button>
     <select id="langSel"></select>
     <button class="theme-btn" id="themeBtn">🌙</button>
   </header>
@@ -415,7 +416,7 @@ function initProfiles(){ profiles=loadProfilesRaw(); if(!profiles||!profiles.len
 function profileName(){ const p=profiles.find(x=>x.id===PROFILE); return p?p.name:"Profile"; }
 function newId(){ return "u"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
 function stateKey(code){ return pk("st:"+code); }
-function loadPrefs(){ try{ const r=JSON.parse(localStorage.getItem(pk("prefs"))); if(r) return {theme:"light",sound:true,dailyGoal:30,voice:{},reverse:{},...r}; }catch(e){} return {theme:"light",sound:true,dailyGoal:30,voice:{},reverse:{}}; }
+function loadPrefs(){ const def={theme:"light",sound:true,dailyGoal:30,voice:{},reverse:{},themePack:"default",owned:["default"],freezes:0}; try{ const r=JSON.parse(localStorage.getItem(pk("prefs"))); if(r) return {...def,...r}; }catch(e){} return def; }
 function savePrefs(){ localStorage.setItem(pk("prefs"),JSON.stringify(PREFS)); }
 function loadState(code){ try{ const r=JSON.parse(localStorage.getItem(stateKey(code))); return r?{...defState,...r}:{...defState}; }catch(e){ return {...defState}; } }
 function save(){ localStorage.setItem(stateKey(currentLang),JSON.stringify(S)); }
@@ -448,7 +449,9 @@ const SRS_GAPS=[0,4*36e5,24*36e5,3*24*36e5,7*24*36e5,21*24*36e5,60*24*36e5];
 function srsTouch(it,en,c){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en; e.s=c?Math.min(6,e.s+1):Math.max(0,e.s-1); e.due=Date.now()+SRS_GAPS[e.s]; S.srs[it]=e; }
 function dueCount(){ const n=Date.now(); return Object.values(S.srs).filter(e=>e.due<=n).length; }
 function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
-function bumpStreak(){ const t=todayStr(); if(S.lastDay===t) return; const yd=new Date(Date.now()-864e5); const y=yd.getFullYear()+"-"+yd.getMonth()+"-"+yd.getDate(); S.streak=(S.lastDay===y)?S.streak+1:1; S.lastDay=t; }
+function bumpStreak(){ const t=todayStr(); if(S.lastDay===t) return; const yd=new Date(Date.now()-864e5); const y=yd.getFullYear()+"-"+yd.getMonth()+"-"+yd.getDate();
+  if(S.lastDay===y) S.streak++; else if(S.lastDay && PREFS.freezes>0){ PREFS.freezes--; savePrefs(); S.streak++; toast("🛡️ Streak Freeze used!"); } else S.streak=1;
+  S.lastDay=t; }
 function addTodayXp(n){ const t=todayStr(); if(S.todayKey!==t){ S.todayKey=t; S.todayXp=0; } S.todayXp+=n; if(!S.xpHist)S.xpHist={}; S.xpHist[t]=(S.xpHist[t]||0)+n; }
 function last7Days(){ const out=[]; for(let i=6;i>=0;i--){ const d=new Date(Date.now()-i*864e5); const k=d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); out.push({k,xp:(S.xpHist&&S.xpHist[k])||0,label:["S","M","T","W","T","F","S"][d.getDay()]}); } return out; }
 function dueForecast(){ const now=Date.now(); let nowC=0,d1=0,d7=0; Object.values(S.srs).forEach(e=>{ if(e.due<=now)nowC++; else if(e.due<=now+864e5)d1++; else if(e.due<=now+7*864e5)d7++; }); return {nowC,d1,d7}; }
@@ -456,8 +459,19 @@ function weakSpots(n){ return Object.entries(S.srs).filter(([it,e])=>!it.include
 function todayXp(){ return S.todayKey===todayStr()?S.todayXp:0; }
 
 /* ---------- theme/voice ---------- */
-function applyTheme(){ document.documentElement.dataset.theme=PREFS.theme; document.getElementById("themeBtn").textContent=PREFS.theme==="dark"?"☀️":"🌙"; }
+const THEMES=[
+  {id:"default",name:"Classic Green",cost:0,c:["#58cc02","#58a700","#4caf00"]},
+  {id:"ocean",name:"Ocean Blue",cost:200,c:["#1cb0f6","#1899d6","#1487bf"]},
+  {id:"sunset",name:"Sunset Orange",cost:200,c:["#ff9600","#e07f00","#cc7400"]},
+  {id:"royal",name:"Royal Purple",cost:250,c:["#ce82ff","#a568cc","#9457bb"]},
+  {id:"cherry",name:"Cherry Red",cost:250,c:["#ff4b6e","#e0344f","#cc2f48"]},
+  {id:"teal",name:"Mint Teal",cost:300,c:["#1dd3b0","#16b89a","#13a589"]},
+  {id:"gold",name:"Golden",cost:600,c:["#ffc800","#e0a800","#cc9900"]},
+];
+function applyPack(){ const t=THEMES.find(x=>x.id===(PREFS.themePack||"default"))||THEMES[0]; const r=document.documentElement.style; r.setProperty("--green",t.c[0]); r.setProperty("--green-dark",t.c[1]); r.setProperty("--green-shadow",t.c[2]); }
+function applyTheme(){ document.documentElement.dataset.theme=PREFS.theme; document.getElementById("themeBtn").textContent=PREFS.theme==="dark"?"☀️":"🌙"; applyPack(); }
 document.getElementById("themeBtn").onclick=()=>{ PREFS.theme=PREFS.theme==="dark"?"light":"dark"; savePrefs(); applyTheme(); };
+document.getElementById("shopBtn").onclick=()=>showShop();
 let VOICES=[];
 function langPrefix(){ return (LANGMETA?LANGMETA.tts:"it-IT").slice(0,2).toLowerCase(); }
 function loadVoices(){ const all=window.speechSynthesis?speechSynthesis.getVoices():[]; const p=langPrefix(); VOICES=all.filter(v=>v.lang&&v.lang.toLowerCase().startsWith(p)); }
@@ -478,7 +492,6 @@ let openUnit=-1;
 function renderHome(){
   document.getElementById("streak").textContent=S.streak;
   document.getElementById("gems").textContent=S.gems;
-  document.getElementById("xpStat").textContent=S.xp;
   const path=document.getElementById("path"); path.innerHTML="";
   const pct=Math.min(100,Math.round(todayXp()/PREFS.dailyGoal*100));
   const goal=document.createElement("div"); goal.className="goal-card";
@@ -501,13 +514,13 @@ function renderHome(){
       const icon=d?"👑":(un?(isConj?"🔤":"⭐"):"🔒");
       node.innerHTML=`<button class="node ${isConj?'conj ':''}${d?"done":(un?"current":"locked")}">${icon}</button><div class="node-label">${les.name}</div><div class="node-stars">${d?starHTML(st):""}</div>`;
       node.querySelector("button").onclick=(un||d)?(()=>startLesson(ui,li)):(()=>toast("Finish the previous set first 🔒"));
-      node.style.marginLeft=(li%2?"60px":"-60px"); wrap.appendChild(node);
+      node.style.marginLeft=(li%2?"40px":"-40px"); wrap.appendChild(node);
     });
     if(!isConj){ const allDone=done===tot, passed=!!S.unitTests[ui];
       const tn=document.createElement("div"); tn.className="node-wrap";
       tn.innerHTML=`<button class="node" style="background:${passed?'var(--gold)':(allDone?'var(--red)':'#c9c9c9')};box-shadow:0 6px 0 ${passed?'#e0a800':(allDone?'var(--red-dark)':'#b0b0b0')}">${passed?'🏆':'📝'}</button><div class="node-label">Unit Test${allDone?"":" 🔒"}</div>`;
       tn.querySelector("button").onclick=allDone?(()=>startUnitTest(ui)):(()=>toast("Finish all sets in this unit first 📝"));
-      tn.style.marginLeft=(tot%2?"60px":"-60px"); wrap.appendChild(tn);
+      tn.style.marginLeft=(tot%2?"40px":"-40px"); wrap.appendChild(tn);
     }
     path.appendChild(wrap);
   }
@@ -910,6 +923,23 @@ function renderDialog(){ const d=DLG.d,n=d.nodes[DLG.node],el=document.getElemen
 }
 
 /* ---------- STATS ---------- */
+function showShop(){ show("home"); setNav(""); const m=document.querySelector("#home main");
+  m.innerHTML=`<div class="unit-banner" style="background:linear-gradient(120deg,#1cb0f6,#ce82ff)"><div><h2>Spend your 💎</h2><h1>Shop 🛒</h1></div><div class="guide">💎 ${S.gems}</div></div>
+    <div class="section-head"><div class="line"></div>🎨 Themes<div class="line"></div></div><div id="shopThemes"></div>
+    <div class="section-head"><div class="line"></div>🛡️ Power-ups<div class="line"></div></div><div id="shopPow"></div>`;
+  m.prepend(backBtn(goHome));
+  const th=document.getElementById("shopThemes");
+  THEMES.forEach(t=>{ const owned=PREFS.owned.includes(t.id),equipped=(PREFS.themePack||"default")===t.id;
+    const row=document.createElement("div"); row.className="menu-card";
+    row.innerHTML=`<span style="display:inline-block;width:34px;height:34px;border-radius:50%;background:${t.c[0]};box-shadow:0 3px 0 ${t.c[2]};flex:0 0 auto"></span><span><span class="mt">${t.name}</span><span class="md">${t.cost?("💎 "+t.cost):"Free"}</span></span><span class="badge" style="background:${equipped?'var(--green)':(owned?'var(--blue)':'var(--gold)')}">${equipped?"Equipped":(owned?"Equip":"Buy")}</span>`;
+    row.querySelector(".badge").onclick=()=>{ if(equipped) return; if(owned){ PREFS.themePack=t.id; savePrefs(); applyPack(); showShop(); } else { if(S.gems>=t.cost){ S.gems-=t.cost; PREFS.owned.push(t.id); PREFS.themePack=t.id; savePrefs(); save(); applyPack(); sfx("complete"); toast("Unlocked "+t.name+" 🎨"); showShop(); } else toast("Not enough 💎 — keep learning!"); } };
+    th.appendChild(row); });
+  const pw=document.getElementById("shopPow"); const FCOST=150;
+  const fr=document.createElement("div"); fr.className="menu-card";
+  fr.innerHTML=`<span class="mi">🛡️</span><span><span class="mt">Streak Freeze ×1</span><span class="md">💎 ${FCOST} · saves your streak if you miss a day · you have ${PREFS.freezes}</span></span><span class="badge" style="background:var(--gold)">Buy</span>`;
+  fr.querySelector(".badge").onclick=()=>{ if(S.gems>=FCOST){ S.gems-=FCOST; PREFS.freezes=(PREFS.freezes||0)+1; savePrefs(); save(); sfx("complete"); toast("Streak Freeze bought 🛡️"); showShop(); } else toast("Not enough 💎"); };
+  pw.appendChild(fr);
+}
 function dashboardHTML(){ const days=last7Days(); const max=Math.max(10,...days.map(d=>d.xp)); const f=dueForecast(); const weak=weakSpots(8);
   const bars=days.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;display:flex;align-items:flex-end;height:70px"><div style="width:70%;margin:0 auto;background:${d.xp?'var(--green)':'var(--border)'};border-radius:6px 6px 0 0;height:${Math.max(4,Math.round(d.xp/max*70))}px"></div></div><div style="font-size:11px;color:var(--muted);font-weight:800">${d.label}</div><div style="font-size:10px;color:var(--muted)">${d.xp||""}</div></div>`).join("");
   const weakHTML=weak.length?weak.map(([it,e])=>{ const pct=Math.round(e.s/6*100); return `<div class="dict-row" style="padding:8px 0"><div><div class="it" style="font-size:15px">${it}</div><div class="en">${e.en}</div></div><div style="margin-left:auto;width:70px;height:8px;background:var(--border);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${e.s>=4?'var(--green)':e.s>=2?'var(--gold)':'var(--red)'}"></div></div></div>`; }).join(""):`<div class="en" style="padding:8px 0">Learn some words first 🙂</div>`;
