@@ -69,6 +69,14 @@ LANG_EXTRA.de = {
    {them:"Woher kommst du?",themEn:"Where are you from?",reply:"Ich komme aus den USA",replyEn:"I'm from the USA",options:["Ich komme aus den USA","Vielen Dank","Gute Nacht"]},
   ]},
  ],
+ dialogues:[
+  {title:"Im Restaurant 🍝", start:"a", nodes:{
+   a:{them:"Guten Abend! Haben Sie reserviert?",themEn:"Good evening! Do you have a reservation?",choices:[{t:"Ja, für zwei",en:"Yes, for two",go:"b"},{t:"Nein, aber wir möchten einen Tisch",en:"No, but we'd like a table",go:"b"}]},
+   b:{them:"Perfekt. Was möchten Sie?",themEn:"Perfect. What would you like?",choices:[{t:"Ich möchte das Hähnchen",en:"I'd like the chicken",go:"c"},{t:"Was empfehlen Sie?",en:"What do you recommend?",go:"r"}]},
+   r:{them:"Der Fisch ist ausgezeichnet.",themEn:"The fish is excellent.",choices:[{t:"Dann nehme ich den Fisch",en:"Then I'll take the fish",go:"c"}]},
+   c:{them:"Und zu trinken?",themEn:"And to drink?",choices:[{t:"Wasser, bitte",en:"Water, please",go:"end"}]},
+   end:{them:"Sehr gut, danke!",themEn:"Very good, thanks!",end:true} }},
+ ],
  conj:{ pronouns:["ich","du","er/sie/es","wir","ihr","sie/Sie"],
   tenses:[{key:"praes",name:"Präsens",note:"Present — also used for the near future. Regular endings: -e, -st, -t, -en, -t, -en."},{key:"perf",name:"Perfekt",note:"The spoken past ('I have done'). haben or sein (present) + past participle (ge-…-t / ge-…-en). Movement verbs use sein."},{key:"praet",name:"Präteritum",note:"The written/narrative past. Common in writing and with sein/haben (war, hatte) in speech."}],
   verbs:[

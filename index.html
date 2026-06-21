@@ -10,6 +10,9 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icon-192.png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
 <title>Impara · Learn Languages</title>
 <style>
   :root{
@@ -22,8 +25,10 @@
   }
   [data-theme="dark"]{ --bg:#131f24; --bg2:#1b2c34; --ink:#f1f1f1; --muted:#7b8b93; --border:#37464f; --card:#1b2c34; }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{overflow-x:hidden;width:100%}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  html{overflow-x:hidden;width:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{overflow-x:hidden;width:100%;font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .2s,color .2s}
+  h1,h2,.q-title,.unit-banner h1,.center-screen h1,.big{font-family:'Baloo 2','Nunito',system-ui,sans-serif}
+  img,canvas,table{max-width:100%}
   .phrase,.q-title,.reading,.ctx,.choice,.tile,.dict-row,.menu-card,.unit-banner h1{overflow-wrap:anywhere;word-break:break-word}
   #ctbl{overflow-x:auto}
   .chat{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
@@ -52,7 +57,11 @@
 
   .section-head{display:flex;align-items:center;gap:10px;margin:22px 0 8px;font-weight:800;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.5px}
   .section-head .line{flex:1;height:2px;background:var(--border)}
-  .unit-banner{color:#fff;border-radius:16px;padding:16px 20px;margin:14px 0 22px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .unit-banner{color:#fff;border-radius:18px;padding:16px 20px;margin:14px 0 22px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.12);position:relative;overflow:hidden}
+  .unit-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.18),rgba(255,255,255,0) 40%);pointer-events:none}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .node.current{animation:bob 1.8s ease-in-out infinite}
+  .section-head{font-family:'Baloo 2','Nunito',sans-serif}
   .unit-banner h2{font-size:13px;opacity:.9;font-weight:700}
   .unit-banner h1{font-size:19px;margin-top:2px}
   .unit-banner .guide{font-size:18px;background:rgba(255,255,255,.2);padding:8px 12px;border-radius:12px;font-weight:700;white-space:nowrap}
@@ -118,7 +127,7 @@
   .gender-noun{font-size:34px;font-weight:800;margin:6px 0 18px}
 
   .foot{margin-top:auto;border-top:2px solid var(--border);padding:18px 0 4px}
-  .foot.show-result{margin:0 -20px;padding:18px 20px 22px}
+  .foot.show-result{margin:0;padding:18px 0 22px;border-radius:14px}
   .foot.correct{background:#d7ffb8} .foot.incorrect{background:#ffdfe0}
   .result-msg{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:800;margin-bottom:14px}
   .result-msg.correct{color:var(--green-dark)} .result-msg.incorrect{color:var(--red-dark)}
@@ -341,7 +350,21 @@ const CONVERSATIONS_IT=[
     {them:"Da bere?",themEn:"To drink?",reply:"Acqua, per favore",replyEn:"Water, please",options:["Acqua, per favore","Buonanotte","Quanto costa?"]},
   ]},
 ];
-const LANGS={ it:{code:"it",name:"Italian",flag:"🇮🇹",tts:"it-IT",latin:true,WORD_THEMES:WORD_THEMES,PHRASE_GROUPS:PHRASE_GROUPS,stories:STORIES_IT,grammar:GRAMMAR_IT,confusables:CONFUSABLES_IT,conversations:CONVERSATIONS_IT,alphabets:null}, ...LANG_EXTRA };
+const DIALOGUES_IT=[
+  {title:"Al ristorante 🍝", start:"a", nodes:{
+    a:{them:"Buonasera! Avete prenotato?",themEn:"Good evening! Do you have a reservation?",choices:[{t:"Sì, per due persone",en:"Yes, for two",go:"b"},{t:"No, ma vorremmo un tavolo",en:"No, but we'd like a table",go:"b"}]},
+    b:{them:"Perfetto, da questa parte. Cosa desiderate?",themEn:"Perfect, this way. What would you like?",choices:[{t:"Vorrei la pasta",en:"I'd like pasta",go:"d"},{t:"Cosa consiglia?",en:"What do you recommend?",go:"r"}]},
+    r:{them:"Il pesce oggi è ottimo.",themEn:"The fish is excellent today.",choices:[{t:"Allora prendo il pesce",en:"Then I'll have the fish",go:"d"},{t:"No, preferisco la carne",en:"No, I prefer meat",go:"d"}]},
+    d:{them:"E da bere?",themEn:"And to drink?",choices:[{t:"Acqua e vino, grazie",en:"Water and wine, thanks",go:"end"},{t:"Solo acqua",en:"Just water",go:"end"}]},
+    end:{them:"Ottima scelta! Arriva subito.",themEn:"Great choice! Coming right up.",end:true} }},
+  {title:"Per strada 🧭", start:"a", nodes:{
+    a:{them:"Mi scusi, posso aiutarla?",themEn:"Excuse me, can I help you?",choices:[{t:"Dov'è la stazione?",en:"Where is the station?",go:"dir"},{t:"Cerco un bar",en:"I'm looking for a café",go:"bar"}]},
+    dir:{them:"Sempre dritto, poi a sinistra.",themEn:"Straight ahead, then left.",choices:[{t:"È lontano?",en:"Is it far?",go:"far"},{t:"Grazie mille!",en:"Thanks a lot!",go:"end"}]},
+    bar:{them:"Ce n'è uno qui vicino, a destra.",themEn:"There's one nearby, on the right.",choices:[{t:"Perfetto, grazie",en:"Perfect, thanks",go:"end"},{t:"È lontano?",en:"Is it far?",go:"far"}]},
+    far:{them:"No, cinque minuti a piedi.",themEn:"No, five minutes on foot.",choices:[{t:"Grazie, molto gentile",en:"Thanks, very kind",go:"end"}]},
+    end:{them:"Di niente, buona giornata!",themEn:"You're welcome, have a good day!",end:true} }},
+];
+const LANGS={ it:{code:"it",name:"Italian",flag:"🇮🇹",tts:"it-IT",latin:true,WORD_THEMES:WORD_THEMES,PHRASE_GROUPS:PHRASE_GROUPS,stories:STORIES_IT,grammar:GRAMMAR_IT,confusables:CONFUSABLES_IT,conversations:CONVERSATIONS_IT,dialogues:DIALOGUES_IT,alphabets:null}, ...LANG_EXTRA };
 const LANG_ORDER=["it","fr","de","ja","ko","hv"];
 /* Italian conjugation object (built from the generator above) for the generic engine */
 LANGS.it.conj={ pronouns:PRONOUNS, tenses:TENSES, verbs:VERBS.map(v=>({inf:v.inf,en:v.en,forms:Object.fromEntries(TENSES.map(t=>[t.key,conjugate(v,t.key)]))})) };
@@ -355,6 +378,7 @@ function buildCourse(code){ const d=LANGS[code]; LANGMETA=d; CURRICULUM=[];
   ALL_WORDS=d.WORD_THEMES.flatMap(t=>t.words); ALL_PHRASES=d.PHRASE_GROUPS.flatMap(g=>g.phrases); ALL_CARDS=ALL_WORDS.concat(ALL_PHRASES);
   STORIES=d.stories||[]; GRAMMAR=d.grammar||[]; ALPHABETS=d.alphabets||null; CONJ=d.conj||null; GLOSS=null;
   CONFUSE_GROUPS=d.confusables||[]; CONFUSE={}; CONFUSE_GROUPS.forEach(g=>g.members.forEach(m=>{ CONFUSE[m]=g; }));
+  REV=!!(PREFS&&PREFS.reverse&&PREFS.reverse[code]);
   CONJ_START=CURRICULUM.length;
   if(CONJ) CONJ.tenses.forEach(t=>CURRICULUM.push({unit:"Grammar",title:t.name+" tense",guide:"🔤",color:"var(--purple)",kind:"conj",tenseKey:t.key,lessons:[{name:"Learn",conj:true},{name:"Drill",conj:true}]}));
   ORDER=buildOrder();
@@ -375,7 +399,7 @@ function buildGloss(){ GLOSS={...GLOSS_EXTRA}; ALL_WORDS.forEach(c=>{ const it=c
 function glossOf(w){ if(!GLOSS) buildGloss(); return GLOSS[w.toLowerCase().replace(/[.,!?;:"]/g,"")]||null; }
 
 /* ---------- state (per language) + prefs (global) ---------- */
-const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{},unitTests:{},rush:{} };
+const defState={ xp:0,gems:0,streak:0,lastDay:null,completed:{},srs:{},todayKey:null,todayXp:0,checkpoints:{},unitTests:{},rush:{},xpHist:{} };
 /* ---------- profiles (local accounts) ---------- */
 const PROFILES_KEY="impara_profiles", CUR_PROFILE_KEY="impara_profile";
 const STATE_LANGS=["it","fr","de","ja","ko","hv"];
@@ -391,7 +415,7 @@ function initProfiles(){ profiles=loadProfilesRaw(); if(!profiles||!profiles.len
 function profileName(){ const p=profiles.find(x=>x.id===PROFILE); return p?p.name:"Profile"; }
 function newId(){ return "u"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
 function stateKey(code){ return pk("st:"+code); }
-function loadPrefs(){ try{ const r=JSON.parse(localStorage.getItem(pk("prefs"))); if(r) return {theme:"light",sound:true,dailyGoal:30,voice:{},...r}; }catch(e){} return {theme:"light",sound:true,dailyGoal:30,voice:{}}; }
+function loadPrefs(){ try{ const r=JSON.parse(localStorage.getItem(pk("prefs"))); if(r) return {theme:"light",sound:true,dailyGoal:30,voice:{},reverse:{},...r}; }catch(e){} return {theme:"light",sound:true,dailyGoal:30,voice:{},reverse:{}}; }
 function savePrefs(){ localStorage.setItem(pk("prefs"),JSON.stringify(PREFS)); }
 function loadState(code){ try{ const r=JSON.parse(localStorage.getItem(stateKey(code))); return r?{...defState,...r}:{...defState}; }catch(e){ return {...defState}; } }
 function save(){ localStorage.setItem(stateKey(currentLang),JSON.stringify(S)); }
@@ -425,7 +449,10 @@ function srsTouch(it,en,c){ const e=S.srs[it]||{s:0,due:0,en}; e.en=en; e.s=c?Ma
 function dueCount(){ const n=Date.now(); return Object.values(S.srs).filter(e=>e.due<=n).length; }
 function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); }
 function bumpStreak(){ const t=todayStr(); if(S.lastDay===t) return; const yd=new Date(Date.now()-864e5); const y=yd.getFullYear()+"-"+yd.getMonth()+"-"+yd.getDate(); S.streak=(S.lastDay===y)?S.streak+1:1; S.lastDay=t; }
-function addTodayXp(n){ const t=todayStr(); if(S.todayKey!==t){ S.todayKey=t; S.todayXp=0; } S.todayXp+=n; }
+function addTodayXp(n){ const t=todayStr(); if(S.todayKey!==t){ S.todayKey=t; S.todayXp=0; } S.todayXp+=n; if(!S.xpHist)S.xpHist={}; S.xpHist[t]=(S.xpHist[t]||0)+n; }
+function last7Days(){ const out=[]; for(let i=6;i>=0;i--){ const d=new Date(Date.now()-i*864e5); const k=d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate(); out.push({k,xp:(S.xpHist&&S.xpHist[k])||0,label:["S","M","T","W","T","F","S"][d.getDay()]}); } return out; }
+function dueForecast(){ const now=Date.now(); let nowC=0,d1=0,d7=0; Object.values(S.srs).forEach(e=>{ if(e.due<=now)nowC++; else if(e.due<=now+864e5)d1++; else if(e.due<=now+7*864e5)d7++; }); return {nowC,d1,d7}; }
+function weakSpots(n){ return Object.entries(S.srs).filter(([it,e])=>!it.includes("·")&&e.en).sort((a,b)=>a[1].s-b[1].s||a[1].due-b[1].due).slice(0,n); }
 function todayXp(){ return S.todayKey===todayStr()?S.todayXp:0; }
 
 /* ---------- theme/voice ---------- */
@@ -497,34 +524,43 @@ function renderHome(){
   refreshBadges();
 }
 
-/* ---------- question builders ---------- */
+/* ---------- question builders (REV = reverse course: learn English from the language) ---------- */
+let REV=false;
+function tg(c){ return REV?c[1]:c[0]; }   /* the side you're producing (target) */
+function bs(c){ return REV?c[0]:c[1]; }   /* the side you already know (base) */
+function rd(c){ return REV?"":(c[2]||""); }
+function canType(){ return REV||LANGMETA.latin; }
+function tLang(){ return REV?"English":LANGMETA.name; }
 function sample(arr,n,ex){ return shuffle(arr.filter(x=>x[0]!==ex)).slice(0,n); }
-function makeMC(card,pool,dir){ const [it,en,read]=card;
-  if(dir==="it2en"){ const opts=shuffle([en,...sample(pool,3,it).map(c=>c[1])]); return {type:"mc",qtype:"Select the meaning",prompt:it,read:read||"",speak:it,options:opts,answer:en,label:"What does this mean?",term:it,termEn:en}; }
-  const opts=shuffle([it,...sample(pool,3,it).map(c=>c[0])]); return {type:"mc",qtype:"Select the translation",prompt:en,speak:null,options:opts,answer:it,label:"How do you say this?",term:it,termEn:en}; }
-function makeListen(card,pool){ const [it,en,read]=card; const opts=shuffle([en,...sample(pool,3,it).map(c=>c[1])]); return {type:"mc",qtype:"Listening",prompt:"🔊 Tap to listen",speak:it,options:opts,answer:en,label:"What did you hear?",listen:true,term:it,termEn:en}; }
-function makeBank(sent){ const [it,en]=sent; const words=it.split(" "); const extra=ALL_WORDS.length?shuffle(ALL_WORDS).slice(0,2).map(c=>c[0].split(" ")[0]):[]; const tiles=shuffle([...words,...extra.filter(w=>!words.includes(w))]); return {type:"bank",qtype:"Build the phrase",prompt:en,speak:it,tiles,answer:words,label:"Translate this phrase",term:it,termEn:en}; }
-function makeAud2En(sent){ const [it,en]=sent; const words=en.replace(/[?!.,]/g,"").split(" "); const pool=ALL_PHRASES.flatMap(p=>p[1].replace(/[?!.,]/g,"").split(" ")); const extra=shuffle(pool).filter(w=>!words.includes(w)).slice(0,3); return {type:"bank",qtype:"Listen & translate",prompt:"🔊 Tap to listen",speak:it,listen:true,tiles:shuffle([...words,...extra]),answer:words,label:"Translate what you hear → English",term:it,termEn:en}; }
-function makeEn2Aud(sent){ const [it,en]=sent; const words=it.split(" "); const pool=ALL_PHRASES.flatMap(p=>p[0].split(" ")); const extra=shuffle(pool).filter(w=>!words.includes(w)).slice(0,3); return {type:"bank",qtype:"Listen & translate",prompt:"🔊 English — tap to listen",speak:en,speakEN:true,listen:true,tiles:shuffle([...words,...extra]),answer:words,label:"Build the "+LANGMETA.name+" you hear",term:it,termEn:en}; }
-function makeType(sent){ const [it,en]=sent; return {type:"type",qtype:"Write it",prompt:en,speak:it,answer:it,label:"Write this in "+LANGMETA.name,term:it,termEn:en}; }
-function makeMatch(cards){ return {type:"match",qtype:"Match the pairs",pairs:cards.map(c=>({it:c[0],en:c[1]})),label:"Tap the matching pairs"}; }
-function makeDictation(sent){ const [it,en]=sent; return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:en,speak:it,answer:it,label:"Listen and type what you hear",term:it,termEn:en}; }
-function makeSpeak(card){ const [it,en,read]=card; return {type:"speak",qtype:"Speaking",prompt:it,read:read||"",en,speak:it,answer:it,label:"Say this out loud",term:it,termEn:en}; }
-function makeNumber(){ const n=Math.floor(Math.random()*101); return {type:"type",qtype:"Numbers",prompt:null,dictation:true,hint:"type the number you hear (digits)",speak:String(n),answer:String(n),term:"num·"+n,termEn:String(n)}; }
+function makeMC(card,pool,dir){ const t=tg(card),b=bs(card),r=rd(card);
+  if(dir==="it2en"){ const opts=shuffle([b,...sample(pool,3,card[0]).map(bs)]); return {type:"mc",qtype:"Select the meaning",prompt:t,read:r,speak:t,speakEN:REV,options:opts,answer:b,label:"What does this mean?",term:card[0],termEn:card[1]}; }
+  const opts=shuffle([t,...sample(pool,3,card[0]).map(tg)]); return {type:"mc",qtype:"Select the translation",prompt:b,speak:null,options:opts,answer:t,label:"How do you say this?",term:card[0],termEn:card[1]}; }
+function makeListen(card,pool){ const t=tg(card),b=bs(card); const opts=shuffle([b,...sample(pool,3,card[0]).map(bs)]); return {type:"mc",qtype:"Listening",prompt:"🔊 Tap to listen",speak:t,speakEN:REV,options:opts,answer:b,label:"What did you hear?",listen:true,term:card[0],termEn:card[1]}; }
+function makeBank(sent){ const t=tg(sent),b=bs(sent); const words=t.split(" "); const extra=ALL_CARDS.length?shuffle(ALL_CARDS).slice(0,2).map(c=>tg(c).split(" ")[0]):[]; const tiles=shuffle([...words,...extra.filter(w=>!words.includes(w))]); return {type:"bank",qtype:"Build the phrase",prompt:b,speak:t,speakEN:REV,tiles,answer:words,label:"Translate this phrase",term:sent[0],termEn:sent[1]}; }
+function makeAud2En(sent){ const t=tg(sent),b=bs(sent); const words=b.replace(/[?!.,]/g,"").split(" "); const pool=ALL_PHRASES.flatMap(p=>bs(p).replace(/[?!.,]/g,"").split(" ")); const extra=shuffle(pool).filter(w=>!words.includes(w)).slice(0,3); return {type:"bank",qtype:"Listen & translate",prompt:"🔊 Tap to listen",speak:t,speakEN:REV,listen:true,tiles:shuffle([...words,...extra]),answer:words,label:"Translate what you hear",term:sent[0],termEn:sent[1]}; }
+function makeEn2Aud(sent){ const t=tg(sent),b=bs(sent); const words=t.split(" "); const pool=ALL_PHRASES.flatMap(p=>tg(p).split(" ")); const extra=shuffle(pool).filter(w=>!words.includes(w)).slice(0,3); return {type:"bank",qtype:"Listen & translate",prompt:"🔊 Tap to listen",speak:b,speakEN:!REV,listen:true,tiles:shuffle([...words,...extra]),answer:words,label:"Build the "+tLang()+" you hear",term:sent[0],termEn:sent[1]}; }
+function makeType(sent){ const t=tg(sent),b=bs(sent); return {type:"type",qtype:"Write it",prompt:b,speak:t,speakEN:REV,answer:t,label:"Write this in "+tLang(),term:sent[0],termEn:sent[1]}; }
+function makeMatch(cards){ return {type:"match",qtype:"Match the pairs",pairs:cards.map(c=>({it:tg(c),en:bs(c)})),label:"Tap the matching pairs"}; }
+function makeDictation(sent){ const t=tg(sent),b=bs(sent); return {type:"type",qtype:"Dictation",prompt:null,dictation:true,hint:b,speak:t,speakEN:REV,answer:t,label:"Listen and type what you hear",term:sent[0],termEn:sent[1]}; }
+function makeSpeak(card){ const t=tg(card),b=bs(card),r=rd(card); return {type:"speak",qtype:"Speaking",prompt:t,read:r,en:b,speak:t,speakEN:REV,answer:t,label:"Say this out loud",term:card[0],termEn:card[1]}; }
+function makeNumber(){ const n=Math.floor(Math.random()*101); return {type:"type",qtype:"Numbers",prompt:null,dictation:true,hint:"type the number you hear (digits)",speak:String(n),speakEN:REV,answer:String(n),term:"num·"+n,termEn:String(n)}; }
 function makeConj(fixedKey){ const VB=CONJ.verbs,TS=CONJ.tenses,PR=CONJ.pronouns;
   const v=VB[Math.floor(Math.random()*VB.length)],t=fixedKey?TS.find(x=>x.key===fixedKey):TS[Math.floor(Math.random()*TS.length)],idx=Math.floor(Math.random()*PR.length);
   const forms=v.forms[t.key],answer=forms[idx]; const wrong=new Set(); forms.forEach((f,i)=>{ if(i!==idx) wrong.add(f); });
   while(wrong.size<3){ const ov=VB[Math.floor(Math.random()*VB.length)],of=ov.forms[t.key][Math.floor(Math.random()*PR.length)]; if(of!==answer) wrong.add(of); if(wrong.size>20) break; }
   return {type:"mc",qtype:"Conjugation · "+t.name,conj:{pronoun:PR[idx],inf:v.inf,en:v.en,tense:t.name},options:shuffle([answer,...[...wrong].slice(0,3)]),answer,label:"Choose the correct form",speak:answer.includes(" ")?answer:PR[idx].split("/")[0]+" "+answer,term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
 function makeConjIntro(t){ const v=CONJ.verbs[0],forms=v.forms[t.key]; const sample=CONJ.pronouns.map((p,i)=>p+" "+forms[i]).join(" · "); return {type:"flash",info:true,qtype:"Grammar",label:"Tense: "+t.name,title:t.name,note:t.note||"",sample:v.inf+" — "+v.en+"<br>"+sample,speak:forms[0]}; }
+function makeConjType(fixedKey){ const VB=CONJ.verbs,TS=CONJ.tenses,PR=CONJ.pronouns; const v=VB[Math.floor(Math.random()*VB.length)],t=fixedKey?TS.find(x=>x.key===fixedKey):TS[Math.floor(Math.random()*TS.length)],idx=Math.floor(Math.random()*PR.length); const ans=v.forms[t.key][idx];
+  return {type:"type",conjType:true,qtype:"Conjugate · "+t.name,promptHtml:`${v.inf} — ${v.en}<br><b style="color:var(--purple);font-size:26px">${PR[idx]} ___</b>`,speak:ans.includes(" ")?ans:PR[idx].split("/")[0]+" "+ans,answer:ans,label:"Type the correct form",term:v.inf+"·"+t.key+"·"+idx,termEn:v.en}; }
 function genderItems(){ const out=[]; ALL_WORDS.forEach(c=>{ const m=c[0].match(/^(il|lo|la)\s+(.+)/); if(m) out.push({art:m[1],noun:m[2],en:c[1],full:c[0]}); }); return out; }
 function makeGender(item){ return {type:"mc",qtype:"Articles · il / lo / la",gender:{noun:item.noun,en:item.en},options:shuffle(["il","lo","la"]),answer:item.art,label:"Which article?",speak:item.full,term:item.full,termEn:item.en}; }
 
-function makeFlash(card){ const [it,en,read]=card; const cf=CONFUSE&&CONFUSE[it.replace(/[?!.]/g,"")]; return {type:"flash",qtype:"New",label:"Learn this word",native:it,read:read||"",en,speak:it,confuse:cf}; }
+function makeFlash(card){ const cf=(!REV)&&CONFUSE&&CONFUSE[card[0].replace(/[?!.]/g,"")]; return {type:"flash",qtype:"New",label:"Learn this word",native:tg(card),read:rd(card),en:bs(card),speak:tg(card),speakEN:REV,confuse:cf}; }
 function buildQueue(unit,lesson){
   const U=CURRICULUM[unit];
-  if(U.kind==="conj"){ const t=CONJ.tenses.find(x=>x.key===U.tenseKey); const q=[]; if(lesson===0) q.push(makeConjIntro(t)); const n=lesson===0?8:12; for(let i=0;i<n;i++) q.push(makeConj(U.tenseKey)); return q; }
-  const les=U.lessons[lesson]; const latin=LANGMETA.latin; const teach=[],quiz=[];
+  if(U.kind==="conj"){ const t=CONJ.tenses.find(x=>x.key===U.tenseKey); const q=[]; if(lesson===0){ q.push(makeConjIntro(t)); for(let i=0;i<8;i++) q.push(makeConj(U.tenseKey)); }
+    else { for(let i=0;i<12;i++) q.push((LANGMETA.latin&&i%2===1)?makeConjType(U.tenseKey):makeConj(U.tenseKey)); } return q; }
+  const les=U.lessons[lesson]; const latin=canType(); const teach=[],quiz=[];
   if(les.cards){ const pool=ALL_WORDS;
     les.cards.forEach(c=>teach.push(makeFlash(c)));                       // 1) learn each word first
     les.cards.forEach(c=>quiz.push(makeMC(c,pool,"it2en")));
@@ -540,8 +576,11 @@ function buildQueue(unit,lesson){
     if(latin) les.phrases.filter((_,i)=>i%2===0).forEach(p=>quiz.push(makeType(p)));
     quiz.push(makeMatch(les.phrases.slice(0,5)));
   }
-  return teach.concat(shuffle(quiz));                                     // teach in order, then quiz shuffled
+  const ex=new Set((les.cards||les.phrases).map(c=>c[0]));
+  return teach.concat(shuffle(quiz.concat(dueReviewQuestions(3,ex)))); // teach first, then quiz mixed with due review words
 }
+function dueReviewQuestions(n,exclude){ const now=Date.now(); const due=shuffle(Object.entries(S.srs).filter(([it,e])=>e.due<=now&&!it.includes("·")&&!exclude.has(it)&&e.en).map(([it,e])=>[it,e.en]));
+  return due.slice(0,n).map(c=>{ const q=Math.random()<.5?makeMC(c,ALL_CARDS,"it2en"):makeMC(c,ALL_CARDS,"en2it"); q.qtype="🔁 Review"; return q; }); }
 /* checkpoints: cumulative review over a group of 5 vocab units */
 function startCheckpoint(tag){ const cards=rushPool(); if(cards.length<4){ toast("Finish some sets first 🏁"); return; }
   const pick=shuffle(cards).slice(0,16); const q=pick.map(c=>{ const r=Math.random(); return r<0.34?makeMC(c,ALL_WORDS,"it2en"):(r<0.67?makeMC(c,ALL_WORDS,"en2it"):makeListen(c,ALL_WORDS)); });
@@ -550,7 +589,7 @@ function startCheckpoint(tag){ const cards=rushPool(); if(cards.length<4){ toast
 function startConjLesson(tk){ if(!CONJ) return; const t=CONJ.tenses.find(x=>x.key===tk); if(!t) return; const q=[makeConjIntro(t)]; for(let i=0;i<10;i++) q.push(makeConj(tk)); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
 function unitItems(ui){ let items=[]; CURRICULUM[ui].lessons.forEach(l=>items.push(...(l.cards||l.phrases))); return items; }
 function startUnitTest(ui){ const items=unitItems(ui); if(items.length<2){ toast("Finish the sets first 📝"); return; }
-  let q; if(LANGMETA.latin){ q=shuffle(items).map(makeType); }
+  let q; if(canType()){ q=shuffle(items).map(makeType); }
   else { q=shuffle(items).flatMap(c=>[makeListen(c,ALL_CARDS),makeBank(c)]); q=shuffle(q).slice(0,Math.max(8,items.length)); }
   L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"unittest",ut:ui}; show("lesson"); renderQuestion(); }
 
@@ -586,12 +625,12 @@ function finishRush(){ if(!L||L._done) return; L._done=true; clearInterval(L.tim
 /* ---------- SESSION ---------- */
 let L=null;
 function startLesson(u,l){ L={unit:u,lesson:l,queue:buildQueue(u,l),i:0,correct:0,mistakes:0,wrongQ:[],mode:"lesson"}; show("lesson"); renderQuestion(); }
-function startConjugation(){ const q=[]; for(let k=0;k<15;k++) q.push(makeConj()); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
+function startConjugation(){ const q=[]; for(let k=0;k<15;k++) q.push((LANGMETA.latin&&k%3===2)?makeConjType():makeConj()); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conj"}; show("lesson"); renderQuestion(); }
 function startPractice(){ const done=Object.keys(S.completed).map(k=>k.split("-").map(Number)); let q=[];
   if(done.length){ shuffle(done).slice(0,4).forEach(([u,l])=>{ if(CURRICULUM[u]&&CURRICULUM[u].lessons[l]) q.push(...buildQueue(u,l)); }); }
   else q=buildQueue(0,0); q=shuffle(q).slice(0,14); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"practice"}; show("lesson"); renderQuestion(); }
 function startReview(){ const n=Date.now(); let due=Object.entries(S.srs).filter(([it,e])=>e.due<=n&&!it.startsWith("num·")&&!it.includes("·")).map(([it,e])=>[it,e.en]); if(!due.length){ toast("Nothing due! Come back later 🔁"); return; } due=shuffle(due).slice(0,15); const q=due.map(c=>Math.random()<.5?makeMC(c,ALL_CARDS,"it2en"):makeMC(c,ALL_CARDS,"en2it")); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"review"}; show("lesson"); renderQuestion(); }
-function startDictation(){ let q; if(LANGMETA.latin) q=shuffle(ALL_PHRASES).slice(0,10).map(makeDictation); else q=shuffle(ALL_PHRASES).slice(0,10).map(p=>makeListen(p,ALL_PHRASES)); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"dictation"}; show("lesson"); renderQuestion(); }
+function startDictation(){ let q; if(canType()) q=shuffle(ALL_PHRASES).slice(0,10).map(makeDictation); else q=shuffle(ALL_PHRASES).slice(0,10).map(p=>makeListen(p,ALL_PHRASES)); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"dictation"}; show("lesson"); renderQuestion(); }
 function startGender(){ const q=shuffle(genderItems()).slice(0,15).map(makeGender); if(!q.length){ toast("Not available for this language"); return; } L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"gender"}; show("lesson"); renderQuestion(); }
 function startHardest(){ const e=Object.entries(S.srs).filter(([it])=>!it.startsWith("num·")&&!it.includes("·")); if(e.length<4){ toast("Learn a few sets first 🧠"); return; } const sorted=e.sort((a,b)=>(a[1].s-b[1].s)||(a[1].due-b[1].due)).slice(0,15).map(([it,x])=>[it,x.en]); const q=sorted.map(c=>Math.random()<.5?makeMC(c,ALL_CARDS,"en2it"):makeMC(c,ALL_CARDS,"it2en")); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"hardest"}; show("lesson"); renderQuestion(); }
 function startSpeaking(){ const q=shuffle(ALL_CARDS).slice(0,10).map(makeSpeak); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"speaking"}; show("lesson"); renderQuestion(); }
@@ -599,7 +638,7 @@ function startNumbers(){ const q=[]; for(let k=0;k<12;k++) q.push(makeNumber());
 function donePhrases(){ const done=Object.keys(S.completed).map(k=>k.split("-").map(Number)); let ph=[]; done.forEach(([u,l])=>{ const L2=CURRICULUM[u]&&CURRICULUM[u].lessons[l]; if(L2&&L2.phrases) ph.push(...L2.phrases); }); return ph.length>=3?ph:ALL_PHRASES.slice(0,24); }
 function startTranslate(){ const ph=donePhrases(); const q=shuffle(ph).slice(0,10).map(p=>Math.random()<.5?makeAud2En(p):makeEn2Aud(p)); L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"translate"}; show("lesson"); renderQuestion(); }
 function startConversation(){ const dlgs=LANGMETA.conversations; if(!dlgs||!dlgs.length){ toast("No conversations for this language yet 💬"); return; }
-  const dlg=dlgs[Math.floor(Math.random()*dlgs.length)]; const modes=LANGMETA.latin?["choose","type","audio"]:["choose","audio"];
+  const dlg=dlgs[Math.floor(Math.random()*dlgs.length)]; const modes=canType()?["choose","type","audio"]:["choose","audio"];
   const hist=[],q=[]; dlg.steps.forEach((s,idx)=>{ q.push({type:"convo",mode:modes[idx%modes.length],them:s.them,themEn:s.themEn,answer:s.reply,replyEn:s.replyEn,options:s.options?shuffle(s.options.slice()):null,history:hist.slice(),term:s.reply,termEn:s.replyEn});
     hist.push({who:"them",text:s.them,en:s.themEn}); hist.push({who:"you",text:s.reply,en:s.replyEn}); });
   L={queue:q,i:0,correct:0,mistakes:0,wrongQ:[],mode:"conversation",title:dlg.title}; show("lesson"); renderQuestion(); }
@@ -667,7 +706,7 @@ function renderBank(q,body){
   setCheck(()=>{ const got=[...ans.children].map(c=>c.textContent); return {right:got.join(" ")===q.answer.join(" "),correct:q.answer.join(" ")}; },()=>ans.children.length>0);
 }
 function renderType(q,body){
-  const head=q.dictation?`${audioControls(q,true)}<div class="ctx">${q.hint}</div>`:`${audioControls(q,true)}<div class="phrase">${q.prompt}</div>`;
+  const head=q.conjType?`<div class="phrase" style="font-size:21px">${q.promptHtml}</div>`:(q.dictation?`${audioControls(q,true)}<div class="ctx">${q.hint}</div>`:`${audioControls(q,true)}<div class="phrase">${q.prompt}</div>`);
   body.innerHTML=`${head}<div class="tip">Accents &amp; capitals optional.</div><input class="type" id="typed" placeholder="Type here…" autocomplete="off" autocapitalize="off"/>`;
   wireAudio(q); if(q.dictation) speak(q.speak);
   const inp=document.getElementById("typed"); inp.oninput=()=>{ inp.value.trim()?enableCheck():disableCheck(); }; inp.onkeydown=e=>{ if(e.key==="Enter"&&!document.getElementById("checkBtn").disabled) doCheck(); }; inp.focus();
@@ -714,7 +753,7 @@ function renderSpeak(q,body){
   mic.onclick=()=>{ const foot=document.getElementById("foot"); if(foot&&foot.classList.contains("show-result")){ speak(q.speak); return; }
     speak(q.speak); if(!supported){ toast("Open the online site in Chrome/Edge for voice input"); return; }
     stopRec(); let rec; try{ rec=new SR(); }catch(e){ toast("Speech input unavailable here"); return; } _activeRec=rec;
-    rec.lang=LANGMETA.tts; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=false;
+    rec.lang=REV?"en-US":LANGMETA.tts; rec.interimResults=true; rec.maxAlternatives=5; rec.continuous=false;
     let done=false,last=""; const target=speakNorm(q.answer); mic.classList.add("live"); hint.textContent="Listening… speak now";
     const grade=text=>{ if(done||L.i!==myIdx) return; done=true; _activeRec=null; mic.classList.remove("live");
       const sc=simScore(speakNorm(text),target); const h=document.getElementById("heard"); if(h){ h.style.display="block"; h.innerHTML=`You said: <b>${text}</b> · ${Math.round(sc*100)}% match`; }
@@ -777,7 +816,7 @@ function showTrain(){ show("home"); const due=dueCount(); const it=currentLang==
     <div class="unit-banner" style="background:var(--blue)"><div><h2>Sharpen your skills</h2><h1>Train 🏋️</h1></div></div>
     <button class="menu-card" id="m-prac"><span class="mi">🎯</span><span><span class="mt">Quick Practice</span><span class="md">Mixed review of finished sets</span></span></button>
     <button class="menu-card" id="m-speak"><span class="mi">🗣️</span><span><span class="mt">Speaking Practice</span><span class="md">Say it out loud — checks pronunciation</span></span></button>
-    <button class="menu-card" id="m-dict"><span class="mi">🎧</span><span><span class="mt">${LANGMETA.latin?"Dictation":"Listening"}</span><span class="md">${LANGMETA.latin?"Hear a phrase, type it":"Hear a phrase, pick the meaning"}</span></span></button>
+    <button class="menu-card" id="m-dict"><span class="mi">🎧</span><span><span class="mt">${canType()?"Dictation":"Listening"}</span><span class="md">${canType()?"Hear a phrase, type it":"Hear a phrase, pick the meaning"}</span></span></button>
     ${cj?`<button class="menu-card" id="m-conj"><span class="mi">🏛️</span><span><span class="mt">Conjugation Gym</span><span class="md">${CONJ.verbs.length} verbs · ${CONJ.tenses.length} tenses</span></span></button>`:""}
     ${it?`<button class="menu-card" id="m-gen"><span class="mi">⚖️</span><span><span class="mt">Il / Lo / La</span><span class="md">Noun gender &amp; articles</span></span></button>`:""}
     <button class="menu-card" id="m-num"><span class="mi">🔢</span><span><span class="mt">Numbers</span><span class="md">Listen and type numbers 0–100</span></span></button>
@@ -796,6 +835,7 @@ function showLearn(){ show("home");
     <div class="unit-banner" style="background:var(--green)"><div><h2>Reference &amp; reading</h2><h1>Learn 📚</h1></div></div>
     ${ALPHABETS?`<button class="menu-card" id="l-alpha"><span class="mi">🔠</span><span><span class="mt">Alphabet / Script</span><span class="md">${ALPHABETS.map(a=>a.name.split(" ")[0]).join(" · ")}</span></span></button>`:""}
     <button class="menu-card" id="l-story"><span class="mi">📖</span><span><span class="mt">Stories</span><span class="md">${STORIES.length} readings · tap any word</span></span></button>
+    ${(LANGMETA.dialogues&&LANGMETA.dialogues.length)?`<button class="menu-card" id="l-dlg"><span class="mi">🎭</span><span><span class="mt">Dialogues</span><span class="md">${LANGMETA.dialogues.length} branching conversations</span></span></button>`:""}
     <button class="menu-card" id="l-dict"><span class="mi">📒</span><span><span class="mt">Dictionary</span><span class="md">All ${ALL_WORDS.length} words · tap to hear</span></span></button>
     <button class="menu-card" id="l-phr"><span class="mi">💬</span><span><span class="mt">Phrasebook</span><span class="md">All ${ALL_PHRASES.length} phrases · tap to hear</span></span></button>
     <button class="menu-card" id="l-gram"><span class="mi">📐</span><span><span class="mt">Grammar Notes</span><span class="md">${GRAMMAR.length} explanations</span></span></button>
@@ -803,6 +843,7 @@ function showLearn(){ show("home");
     ${CONJ?`<button class="menu-card" id="l-conj"><span class="mi">📋</span><span><span class="mt">Conjugation Tables</span><span class="md">${CONJ.verbs.length} verbs · ${CONJ.tenses.length} tenses</span></span></button>`:""}`;
   if(ALPHABETS) document.getElementById("l-alpha").onclick=showAlphabets;
   document.getElementById("l-story").onclick=showStories;
+  { const dl=document.getElementById("l-dlg"); if(dl) dl.onclick=showDialogues; }
   document.getElementById("l-dict").onclick=()=>showWordList("Dictionary 📒",ALL_WORDS,"Search…");
   document.getElementById("l-phr").onclick=()=>showWordList("Phrasebook 💬",ALL_PHRASES,"Search phrases…");
   document.getElementById("l-gram").onclick=showGrammar;
@@ -850,8 +891,35 @@ function openStory(i){ const s=STORIES[i],m=document.querySelector("#home main")
   document.getElementById("playAll").onclick=()=>playStory(s);
 }
 function playStory(s){ let k=0; const u=()=>{ if(k>=s.lines.length||!window.speechSynthesis) return; const utt=new SpeechSynthesisUtterance(s.lines[k][0]); utt.lang=LANGMETA.tts; utt.rate=.9; const v=pickVoice(); if(v)utt.voice=v; utt.onend=()=>{ k++; u(); }; speechSynthesis.speak(utt); }; speechSynthesis.cancel(); u(); }
+/* ---------- branching dialogues ---------- */
+let DLG=null;
+function showDialogues(){ const m=document.querySelector("#home main"); m.innerHTML=`<div class="unit-banner" style="background:#ce82ff"><div><h2>Interactive · choose your path</h2><h1>Dialogues 🎭</h1></div></div>`; m.prepend(backBtn(showLearn));
+  if(!LANGMETA.dialogues||!LANGMETA.dialogues.length){ const p=document.createElement("p"); p.style.cssText="color:var(--muted);font-weight:600;padding:20px"; p.textContent="Dialogues coming soon for this language."; m.appendChild(p); return; }
+  LANGMETA.dialogues.forEach((d,i)=>{ const c=document.createElement("button"); c.className="menu-card"; c.innerHTML=`<span class="mi">🎭</span><span><span class="mt">${d.title}</span><span class="md">Branching conversation — your choices change it</span></span>`; c.onclick=()=>openDialogue(i); m.appendChild(c); });
+}
+function openDialogue(i){ DLG={d:LANGMETA.dialogues[i],node:LANGMETA.dialogues[i].start,hist:[]}; show("lesson"); renderDialog(); }
+function renderDialog(){ const d=DLG.d,n=d.nodes[DLG.node],el=document.getElementById("lesson");
+  const chat=DLG.hist.map(t=>`<div class="bub ${t.who}">${t.text}${t.en?`<div class="ben">${t.en}</div>`:""}</div>`).join("");
+  el.innerHTML=`<div class="progress-row"><button class="close" id="closeBtn">✕</button><div class="bar"><div style="width:${Math.min(100,DLG.hist.length/2*22)}%"></div></div><div class="counter">🎭</div></div>
+    <div class="q-type">${d.title}</div><div id="qbody"><div class="chat">${chat}<div class="bub them cur"><button class="speaker" id="spk" style="font-size:20px;padding:8px 12px;margin-right:8px">🔊</button>${n.them}${n.themEn?`<div class="ben">${n.themEn}</div>`:""}</div></div><div id="dch"></div></div><div class="foot" id="foot"></div>`;
+  document.getElementById("closeBtn").onclick=()=>{ if(confirm("Leave the dialogue?")) goHome(); };
+  document.getElementById("spk").onclick=()=>speak(n.them); speak(n.them);
+  if(n.end){ const foot=document.getElementById("foot"); foot.className="foot show-result correct"; foot.innerHTML=`<div class="result-msg correct">✅ Dialogue complete!</div><button class="btn" id="contBtn">Continue (+20 XP)</button>`; document.getElementById("contBtn").onclick=()=>{ bumpStreak(); S.xp+=20; addTodayXp(20); S.gems+=8; save(); sfx("complete"); confetti(); goHome(); }; return; }
+  const dch=document.getElementById("dch"); dch.innerHTML=`<div class="ctx">Choose your reply:</div><div class="choices"></div>`; const wrap=dch.querySelector(".choices");
+  n.choices.forEach(ch=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML=`${ch.t}${ch.en?`<div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:2px">${ch.en}</div>`:""}`; b.onclick=()=>{ sfx("correct"); speak(ch.t); DLG.hist.push({who:"them",text:n.them,en:n.themEn}); DLG.hist.push({who:"you",text:ch.t,en:ch.en}); DLG.node=ch.go; renderDialog(); }; wrap.appendChild(b); });
+}
 
 /* ---------- STATS ---------- */
+function dashboardHTML(){ const days=last7Days(); const max=Math.max(10,...days.map(d=>d.xp)); const f=dueForecast(); const weak=weakSpots(8);
+  const bars=days.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;display:flex;align-items:flex-end;height:70px"><div style="width:70%;margin:0 auto;background:${d.xp?'var(--green)':'var(--border)'};border-radius:6px 6px 0 0;height:${Math.max(4,Math.round(d.xp/max*70))}px"></div></div><div style="font-size:11px;color:var(--muted);font-weight:800">${d.label}</div><div style="font-size:10px;color:var(--muted)">${d.xp||""}</div></div>`).join("");
+  const weakHTML=weak.length?weak.map(([it,e])=>{ const pct=Math.round(e.s/6*100); return `<div class="dict-row" style="padding:8px 0"><div><div class="it" style="font-size:15px">${it}</div><div class="en">${e.en}</div></div><div style="margin-left:auto;width:70px;height:8px;background:var(--border);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${e.s>=4?'var(--green)':e.s>=2?'var(--gold)':'var(--red)'}"></div></div></div>`; }).join(""):`<div class="en" style="padding:8px 0">Learn some words first 🙂</div>`;
+  return `<div class="settings-box"><label>📈 Last 7 days (XP)</label><div style="display:flex;gap:6px;align-items:flex-end">${bars}</div></div>
+    <div class="settings-box"><label>⏳ Review forecast</label><div style="display:flex;gap:10px;text-align:center">
+      <div class="reward blue" style="flex:1"><div class="lbl">DUE NOW</div><div class="val">${f.nowC}</div></div>
+      <div class="reward" style="flex:1"><div class="lbl">NEXT 24H</div><div class="val">${f.d1}</div></div>
+      <div class="reward purple" style="flex:1"><div class="lbl">THIS WEEK</div><div class="val">${f.d7}</div></div></div></div>
+    <div class="settings-box"><label>🩹 Weak spots — practice these</label>${weakHTML}<button class="btn red" id="dashHard" style="margin-top:12px">Drill my hardest words 🧠</button></div>`;
+}
 function showStats(){ show("home"); loadVoices();
   const lvl=Math.floor(S.xp/100)+1,into=S.xp%100;
   const strong=Object.values(S.srs).filter(e=>e.s>=4).length,learning=Object.keys(S.srs).length;
@@ -875,6 +943,9 @@ function showStats(){ show("home"); loadVoices();
       <div style="display:flex;gap:14px"><div class="reward blue" style="flex:1;text-align:center"><div class="lbl">STREAK</div><div class="val">🔥 ${S.streak}</div></div><div class="reward" style="flex:1;text-align:center"><div class="lbl">GEMS</div><div class="val">💎 ${S.gems}</div></div></div>
       <div style="display:flex;gap:14px"><div class="reward" style="flex:1;border-color:var(--green);text-align:center"><div class="lbl" style="background:var(--green)">SETS DONE</div><div class="val" style="color:var(--green-dark)">${doneCount()}/${totalLessons()}</div></div><div class="reward purple" style="flex:1;text-align:center"><div class="lbl">WORDS SEEN</div><div class="val">${learning}</div></div></div>
       <div class="reward" style="border-color:var(--green);text-align:center;padding:18px"><div style="font-size:13px;color:var(--muted);font-weight:800">MASTERED (SRS 4+)</div><div style="font-size:34px;font-weight:800;color:var(--green-dark)">${strong}</div></div>
+      ${dashboardHTML()}
+      <div class="settings-box"><label>🔄 Course direction</label><select id="dirSel"><option value="fwd" ${!REV?"selected":""}>English → ${LANGMETA.name} (learn ${LANGMETA.name})</option><option value="rev" ${REV?"selected":""}>${LANGMETA.name} → English (learn English)</option></select>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:8px">Reverse the course to learn English using ${LANGMETA.name} as your base language.</div></div>
       <div class="settings-box"><label>🎯 Daily XP goal</label><select id="goalSel">${[10,20,30,50,80,120].map(g=>`<option value="${g}" ${PREFS.dailyGoal===g?"selected":""}>${g} XP / day</option>`).join("")}</select></div>
       <div class="settings-box"><label>🔔 Sound effects</label><select id="soundSel"><option value="on" ${PREFS.sound?"selected":""}>On</option><option value="off" ${!PREFS.sound?"selected":""}>Off</option></select></div>
       <div class="settings-box"><label>🔊 ${LANGMETA.name} voice</label><select id="voiceSel">${voiceOpts}</select>
@@ -892,6 +963,8 @@ function showStats(){ show("home"); loadVoices();
   document.getElementById("soundSel").onchange=e=>{ PREFS.sound=e.target.value==="on"; savePrefs(); if(PREFS.sound) sfx("correct"); };
   document.getElementById("voiceSel").onchange=e=>{ PREFS.voice[currentLang]=e.target.value; savePrefs(); };
   document.getElementById("testVoice").onclick=()=>speak(ALL_PHRASES[0]?ALL_PHRASES[0][0]:"Ciao!");
+  { const dh=document.getElementById("dashHard"); if(dh) dh.onclick=startHardest; }
+  document.getElementById("dirSel").onchange=e=>{ if(!PREFS.reverse)PREFS.reverse={}; PREFS.reverse[currentLang]=(e.target.value==="rev"); savePrefs(); REV=PREFS.reverse[currentLang]; toast(REV?("Now learning English from "+LANGMETA.name):("Now learning "+LANGMETA.name)); showStats(); };
   document.getElementById("resetBtn").onclick=()=>{ if(confirm("Erase progress for "+LANGMETA.name+"?")){ S={...defState}; save(); goHome(); } };
 }
 

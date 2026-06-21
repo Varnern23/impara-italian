@@ -44,6 +44,14 @@ LANG_EXTRA.fr = {
    {them:"D'où viens-tu ?",themEn:"Where are you from?",reply:"Je viens des États-Unis",replyEn:"I'm from the US",options:["Je viens des États-Unis","Merci beaucoup","Bonne nuit"]},
   ]},
  ],
+ dialogues:[
+  {title:"Au restaurant 🍝", start:"a", nodes:{
+   a:{them:"Bonsoir ! Vous avez réservé ?",themEn:"Good evening! Do you have a reservation?",choices:[{t:"Oui, pour deux",en:"Yes, for two",go:"b"},{t:"Non, mais on voudrait une table",en:"No, but we'd like a table",go:"b"}]},
+   b:{them:"Parfait. Que désirez-vous ?",themEn:"Perfect. What would you like?",choices:[{t:"Je voudrais le poulet",en:"I'd like the chicken",go:"c"},{t:"Que recommandez-vous ?",en:"What do you recommend?",go:"r"}]},
+   r:{them:"Le poisson est excellent.",themEn:"The fish is excellent.",choices:[{t:"Je prends le poisson",en:"I'll have the fish",go:"c"}]},
+   c:{them:"Et comme boisson ?",themEn:"And to drink?",choices:[{t:"De l'eau, s'il vous plaît",en:"Water, please",go:"end"}]},
+   end:{them:"Très bien, merci !",themEn:"Very good, thank you!",end:true} }},
+ ],
  conj:{ pronouns:["je","tu","il/elle","nous","vous","ils/elles"],
   tenses:[{key:"pres",name:"Présent",note:"Current or habitual actions ('I speak / I am speaking'). Regular -er verbs: -e, -es, -e, -ons, -ez, -ent."},{key:"pc",name:"Passé composé",note:"The completed past ('I spoke / I have spoken'). avoir or être (present) + past participle (-é, -i, -u). Movement verbs use être and agree."},{key:"fut",name:"Futur",note:"What will happen ('I will speak'). Add -ai, -as, -a, -ons, -ez, -ont to the infinitive."}],
   verbs:[
