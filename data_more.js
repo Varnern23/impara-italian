@@ -50,6 +50,25 @@ LANG_EXTRA.fr = {
 /* ===================== GERMAN ===================== */
 LANG_EXTRA.de = {
  code:"de", name:"German", flag:"🇩🇪", tts:"de-DE", latin:true,
+ confusables:[
+  {title:"du vs Sie",members:["du","Sie"],note:"<b>du</b> = informal 'you' (friends, family). <b>Sie</b> (capitalized) = formal 'you'. Use Sie with strangers and in business."},
+  {title:"kennen vs wissen",members:["kennen","wissen"],note:"<b>kennen</b> = to know / be familiar with a person or place (Ich kenne Anna). <b>wissen</b> = to know a fact (Ich weiß die Antwort)."},
+  {title:"der / die / das",members:["der","die","das"],note:"German's three genders: <b>der</b> (masculine), <b>die</b> (feminine & all plurals), <b>das</b> (neuter). Always learn a noun together with its article."},
+  {title:"wo vs wohin",members:["wo","wohin"],note:"<b>wo</b> = 'where' (location: Wo bist du?). <b>wohin</b> = 'where to' (direction: Wohin gehst du?)."},
+  {title:"nach vs zu",members:["nach","zu"],note:"<b>nach</b> = to (cities/countries: nach Berlin) and 'after'. <b>zu</b> = to (people/places: zu mir, zum Arzt)."},
+ ],
+ conversations:[
+  {title:"Im Café", steps:[
+   {them:"Guten Tag! Was möchten Sie?",themEn:"Hello! What would you like?",reply:"Einen Kaffee, bitte",replyEn:"A coffee, please",options:["Einen Kaffee, bitte","Ich heiße Anna","Bis morgen"]},
+   {them:"Sonst noch etwas?",themEn:"Anything else?",reply:"Nein, danke",replyEn:"No, thanks",options:["Nein, danke","Ich habe Hunger","Wo ist die Toilette?"]},
+   {them:"Das macht zwei Euro.",themEn:"That's two euros.",reply:"Bitte schön",replyEn:"Here you are",options:["Bitte schön","Ich verstehe nicht","Wie spät ist es?"]},
+  ]},
+  {title:"Kennenlernen", steps:[
+   {them:"Hallo! Wie heißt du?",themEn:"Hi! What's your name?",reply:"Ich heiße Marc",replyEn:"My name is Marc",options:["Ich heiße Marc","Mir geht's gut","Ich bin zwanzig"]},
+   {them:"Wie geht's?",themEn:"How are you?",reply:"Gut, danke",replyEn:"Good, thanks",options:["Gut, danke","Auf Wiedersehen","Es ist spät"]},
+   {them:"Woher kommst du?",themEn:"Where are you from?",reply:"Ich komme aus den USA",replyEn:"I'm from the USA",options:["Ich komme aus den USA","Vielen Dank","Gute Nacht"]},
+  ]},
+ ],
  conj:{ pronouns:["ich","du","er/sie/es","wir","ihr","sie/Sie"],
   tenses:[{key:"praes",name:"Präsens",note:"Present — also used for the near future. Regular endings: -e, -st, -t, -en, -t, -en."},{key:"perf",name:"Perfekt",note:"The spoken past ('I have done'). haben or sein (present) + past participle (ge-…-t / ge-…-en). Movement verbs use sein."},{key:"praet",name:"Präteritum",note:"The written/narrative past. Common in writing and with sein/haben (war, hatte) in speech."}],
   verbs:[

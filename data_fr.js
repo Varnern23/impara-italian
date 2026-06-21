@@ -24,6 +24,26 @@ LANG_EXTRA.fr = {
   {title:"Le voyage à Paris", level:"B1", lines:[["L'année dernière, je suis allé à Paris avec un ami.","Last year I went to Paris with a friend."],["Nous avons visité le Louvre et la tour Eiffel.","We visited the Louvre and the Eiffel Tower."],["La nourriture était délicieuse, mais il pleuvait souvent.","The food was delicious, but it often rained."],["Je voudrais y retourner l'été prochain.","I'd like to go back next summer."],["Paris est une ville que je n'oublierai jamais.","Paris is a city I will never forget."]]},
  ],
  alphabets:null,
+ confusables:[
+  {title:"tu vs vous",members:["tu","vous"],note:"<b>tu</b> = informal 'you' (friends, family). <b>vous</b> = formal 'you' or plural 'you all'. Use vous with strangers and elders."},
+  {title:"le/la (article) vs le/la (pronoun)",members:["le","la","les"],note:"Before a noun they mean 'the' (le chien). As object pronouns they mean it/him/her/them and go before the verb (Je le vois = I see it/him)."},
+  {title:"savoir vs connaître",members:["savoir","connaître"],note:"<b>savoir</b> = to know a fact or how to do something (Je sais nager). <b>connaître</b> = to be familiar with a person/place (Je connais Marie)."},
+  {title:"bon vs bien",members:["bon","bien"],note:"<b>bon</b> = 'good', adjective (un bon café). <b>bien</b> = 'well', adverb (Je vais bien = I'm well)."},
+  {title:"an vs année",members:["an","année"],note:"<b>an</b> counts years (J'ai vingt ans). <b>année</b> emphasizes the duration/experience of the year (Bonne année!)."},
+  {title:"c'est vs il est",members:["c'est","il est"],note:"<b>c'est</b> + noun/name (C'est un médecin). <b>il est</b> + adjective/profession alone (Il est médecin; Il est grand)."},
+ ],
+ conversations:[
+  {title:"Au café", steps:[
+   {them:"Bonjour ! Vous désirez ?",themEn:"Hello! What would you like?",reply:"Un café, s'il vous plaît",replyEn:"A coffee, please",options:["Un café, s'il vous plaît","Je m'appelle Anne","À demain"]},
+   {them:"Autre chose ?",themEn:"Anything else?",reply:"Non, merci",replyEn:"No, thanks",options:["Non, merci","J'ai faim","Où sont les toilettes ?"]},
+   {them:"Ça fait deux euros.",themEn:"That's two euros.",reply:"Voilà",replyEn:"Here you are",options:["Voilà","Je ne comprends pas","Quelle heure est-il ?"]},
+  ]},
+  {title:"Rencontre", steps:[
+   {them:"Salut ! Comment tu t'appelles ?",themEn:"Hi! What's your name?",reply:"Je m'appelle Marc",replyEn:"My name is Marc",options:["Je m'appelle Marc","Ça va bien","J'ai vingt ans"]},
+   {them:"Comment ça va ?",themEn:"How are you?",reply:"Ça va bien, merci",replyEn:"I'm fine, thanks",options:["Ça va bien, merci","Au revoir","Il est tard"]},
+   {them:"D'où viens-tu ?",themEn:"Where are you from?",reply:"Je viens des États-Unis",replyEn:"I'm from the US",options:["Je viens des États-Unis","Merci beaucoup","Bonne nuit"]},
+  ]},
+ ],
  conj:{ pronouns:["je","tu","il/elle","nous","vous","ils/elles"],
   tenses:[{key:"pres",name:"Présent",note:"Current or habitual actions ('I speak / I am speaking'). Regular -er verbs: -e, -es, -e, -ons, -ez, -ent."},{key:"pc",name:"Passé composé",note:"The completed past ('I spoke / I have spoken'). avoir or être (present) + past participle (-é, -i, -u). Movement verbs use être and agree."},{key:"fut",name:"Futur",note:"What will happen ('I will speak'). Add -ai, -as, -a, -ons, -ez, -ont to the infinitive."}],
   verbs:[
