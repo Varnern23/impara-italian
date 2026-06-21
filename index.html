@@ -237,6 +237,7 @@
 <canvas id="confetti"></canvas>
 
 <script src="data.js"></script>
+<script src="data_it_extra.js"></script>
 <script src="data_more.js"></script>
 <script src="data_fr.js"></script>
 <script src="data_de.js"></script>
@@ -367,18 +368,19 @@ const DIALOGUES_IT=[
     far:{them:"No, cinque minuti a piedi.",themEn:"No, five minutes on foot.",choices:[{t:"Grazie, molto gentile",en:"Thanks, very kind",go:"end"}]},
     end:{them:"Di niente, buona giornata!",themEn:"You're welcome, have a good day!",end:true} }},
 ];
-const LANGS={ it:{code:"it",name:"Italian",flag:"🇮🇹",tts:"it-IT",latin:true,WORD_THEMES:WORD_THEMES,PHRASE_GROUPS:PHRASE_GROUPS,stories:STORIES_IT,grammar:GRAMMAR_IT,confusables:CONFUSABLES_IT,conversations:CONVERSATIONS_IT,dialogues:DIALOGUES_IT,alphabets:null}, ...LANG_EXTRA };
+const LANGS={ it:{code:"it",name:"Italian",flag:"🇮🇹",tts:"it-IT",latin:true,WORD_THEMES:WORD_THEMES,PHRASE_GROUPS:PHRASE_GROUPS,stories:STORIES_IT,grammar:GRAMMAR_IT,confusables:CONFUSABLES_IT,conversations:CONVERSATIONS_IT,dialogues:DIALOGUES_IT,extraWords:(typeof IT_EXTRA_WORDS!=="undefined"?IT_EXTRA_WORDS:[]),alphabets:null}, ...LANG_EXTRA };
 const LANG_ORDER=["it","fr","de","ja","ko","hv"];
 /* Italian conjugation object (built from the generator above) for the generic engine */
 LANGS.it.conj={ pronouns:PRONOUNS, tenses:TENSES, verbs:VERBS.map(v=>({inf:v.inf,en:v.en,forms:Object.fromEntries(TENSES.map(t=>[t.key,conjugate(v,t.key)]))})) };
 
 /* per-course (rebuilt on language switch) */
-let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,PHRASE_START,CONJ_START,ORDER,STORIES,GRAMMAR,ALPHABETS,CONJ,CONFUSE,CONFUSE_GROUPS,GLOSS=null;
+let LANGMETA,CURRICULUM,ALL_WORDS,ALL_PHRASES,ALL_CARDS,ALL_DICT,PHRASE_START,CONJ_START,ORDER,STORIES,GRAMMAR,ALPHABETS,CONJ,CONFUSE,CONFUSE_GROUPS,GLOSS=null;
 function buildCourse(code){ const d=LANGS[code]; LANGMETA=d; CURRICULUM=[];
   d.WORD_THEMES.forEach((t,i)=>CURRICULUM.push({unit:"Words "+(i+1),title:t.cat,guide:"🔤",color:COLORS[i%4],kind:"vocab",lessons:chunk(t.words,8).map((c,j)=>({name:"Set "+(j+1),cards:c}))}));
   PHRASE_START=CURRICULUM.length;
   d.PHRASE_GROUPS.forEach((g,i)=>CURRICULUM.push({unit:"Phrases "+(i+1),title:g.cat,guide:"💬",color:COLORS[(i+1)%4],kind:"phrase",lessons:chunk(g.phrases,5).map((c,j)=>({name:"Set "+(j+1),phrases:c}))}));
   ALL_WORDS=d.WORD_THEMES.flatMap(t=>t.words); ALL_PHRASES=d.PHRASE_GROUPS.flatMap(g=>g.phrases); ALL_CARDS=ALL_WORDS.concat(ALL_PHRASES);
+  { const seen=new Set(); ALL_DICT=ALL_WORDS.concat(d.extraWords||[]).filter(c=>{ const k=c[0]; if(seen.has(k)) return false; seen.add(k); return true; }); }
   STORIES=d.stories||[]; GRAMMAR=d.grammar||[]; ALPHABETS=d.alphabets||null; CONJ=d.conj||null; GLOSS=null;
   CONFUSE_GROUPS=d.confusables||[]; CONFUSE={}; CONFUSE_GROUPS.forEach(g=>g.members.forEach(m=>{ CONFUSE[m]=g; }));
   REV=!!(PREFS&&PREFS.reverse&&PREFS.reverse[code]);
@@ -851,7 +853,7 @@ function showLearn(){ show("home");
     ${ALPHABETS?`<button class="menu-card" id="l-alpha"><span class="mi">🔠</span><span><span class="mt">Alphabet / Script</span><span class="md">${ALPHABETS.map(a=>a.name.split(" ")[0]).join(" · ")}</span></span></button>`:""}
     <button class="menu-card" id="l-story"><span class="mi">📖</span><span><span class="mt">Stories</span><span class="md">${STORIES.length} readings · tap any word</span></span></button>
     ${(LANGMETA.dialogues&&LANGMETA.dialogues.length)?`<button class="menu-card" id="l-dlg"><span class="mi">🎭</span><span><span class="mt">Dialogues</span><span class="md">${LANGMETA.dialogues.length} branching conversations</span></span></button>`:""}
-    <button class="menu-card" id="l-dict"><span class="mi">📒</span><span><span class="mt">Dictionary</span><span class="md">All ${ALL_WORDS.length} words · tap to hear</span></span></button>
+    <button class="menu-card" id="l-dict"><span class="mi">📒</span><span><span class="mt">Dictionary</span><span class="md">${ALL_DICT.length} words · tap to hear</span></span></button>
     <button class="menu-card" id="l-phr"><span class="mi">💬</span><span><span class="mt">Phrasebook</span><span class="md">All ${ALL_PHRASES.length} phrases · tap to hear</span></span></button>
     <button class="menu-card" id="l-gram"><span class="mi">📐</span><span><span class="mt">Grammar Notes</span><span class="md">${GRAMMAR.length} explanations</span></span></button>
     ${CONFUSE_GROUPS.length?`<button class="menu-card" id="l-conf"><span class="mi">⚠️</span><span><span class="mt">Tricky Words</span><span class="md">${CONFUSE_GROUPS.length} confusable pairs explained</span></span></button>`:""}
@@ -859,7 +861,7 @@ function showLearn(){ show("home");
   if(ALPHABETS) document.getElementById("l-alpha").onclick=showAlphabets;
   document.getElementById("l-story").onclick=showStories;
   { const dl=document.getElementById("l-dlg"); if(dl) dl.onclick=showDialogues; }
-  document.getElementById("l-dict").onclick=()=>showWordList("Dictionary 📒",ALL_WORDS,"Search…");
+  document.getElementById("l-dict").onclick=()=>showWordList("Dictionary 📒",ALL_DICT,"Search…");
   document.getElementById("l-phr").onclick=()=>showWordList("Phrasebook 💬",ALL_PHRASES,"Search phrases…");
   document.getElementById("l-gram").onclick=showGrammar;
   const cf=document.getElementById("l-conf"); if(cf) cf.onclick=showConfusables;
@@ -873,7 +875,7 @@ function showAlphabets(){ const m=document.querySelector("#home main"); m.innerH
 function showWordList(title,data,ph){ const m=document.querySelector("#home main"); const all=[...data].sort((a,b)=>a[0].localeCompare(b[0]));
   m.innerHTML=`<div class="unit-banner" style="background:var(--green)"><div><h2>${all.length} entries</h2><h1>${title}</h1></div></div><input class="search" id="dq" placeholder="${ph}"/><div id="dlist"></div>`;
   m.prepend(backBtn(showLearn)); const list=document.getElementById("dlist");
-  function draw(f){ f=(f||"").toLowerCase(); list.innerHTML=""; all.filter(c=>!f||c[0].toLowerCase().includes(f)||c[1].toLowerCase().includes(f)||(c[2]&&c[2].toLowerCase().includes(f))).slice(0,400).forEach(c=>{ const r=document.createElement("div"); r.className="dict-row"; r.innerHTML=`<div><div class="it">${c[0]}</div><div class="en">${c[1]}${c[2]?" · "+c[2]:""}</div></div><div class="pl">🔊</div>`; r.onclick=()=>speak(c[0]); list.appendChild(r); }); }
+  function draw(f){ f=(f||"").toLowerCase(); list.innerHTML=""; const res=all.filter(c=>!f||c[0].toLowerCase().includes(f)||c[1].toLowerCase().includes(f)||(c[2]&&c[2].toLowerCase().includes(f))); res.slice(0,800).forEach(c=>{ const r=document.createElement("div"); r.className="dict-row"; r.innerHTML=`<div><div class="it">${c[0]}</div><div class="en">${c[1]}${c[2]?" · "+c[2]:""}</div></div><div class="pl">🔊</div>`; r.onclick=()=>speak(c[0]); list.appendChild(r); }); if(res.length>800){ const more=document.createElement("div"); more.className="en"; more.style.cssText="padding:12px;text-align:center"; more.textContent="+"+(res.length-800)+" more — type to search"; list.appendChild(more); } }
   draw(""); document.getElementById("dq").oninput=e=>draw(e.target.value);
 }
 function showGrammar(){ const m=document.querySelector("#home main"); m.innerHTML=`<div class="unit-banner" style="background:var(--green)"><div><h2>${LANGMETA.name} reference</h2><h1>Grammar 📐</h1></div></div>`; m.prepend(backBtn(showLearn));

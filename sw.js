@@ -1,9 +1,10 @@
 /* Impara service worker — offline app shell */
-const CACHE = "impara-v20";
+const CACHE = "impara-v21";
 const ASSETS = [
   "./",
   "./index.html",
   "./data.js",
+  "./data_it_extra.js",
   "./data_more.js",
   "./data_fr.js",
   "./data_de.js",
